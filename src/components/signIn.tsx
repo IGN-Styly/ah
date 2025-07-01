@@ -22,7 +22,7 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
 
   return (
-    <Card className="max-w-md">
+    <Card className="max-w-md rounded-none">
       <CardHeader>
         <CardTitle className="text-lg md:text-xl">Sign In</CardTitle>
         <CardDescription className="text-xs md:text-sm">
@@ -39,7 +39,7 @@ export default function SignIn() {
           >
             <Button
               variant="outline"
-              className={cn("w-full gap-2")}
+              className={cn("w-full gap-2 rounded-none")}
               disabled={loading}
               onClick={async () => {
                 await authClient.signIn.social(
