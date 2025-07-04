@@ -24,7 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, ArrowDownUp } from "lucide-react";
+import { Search, ArrowDownUp, X } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
@@ -77,6 +77,16 @@ export default function Home() {
                     className="pl-10 rounded-none"
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                  <div className="absolute right-3 top-[25%] ">
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                      className="hover:bg-primary"
+                    >
+                      <X className="h-4 w-4 hover:text-background" />
+                    </button>
+                  </div>
                 </div>
                 <div className="w-48">
                   <Select value={sortBy} onValueChange={setSortBy}>
