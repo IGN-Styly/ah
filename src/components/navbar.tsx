@@ -57,69 +57,9 @@ export default function Navbar() {
             </span>
           </div>
 
-          <div
-            className={`hidden lg:flex items-center space-x-8 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
-          >
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Store
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Pro
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              AI
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              iOS
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Teams
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Developers
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Changelog
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Blog
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#"
-              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
-            >
-              Log in
-            </Link>
+          <div className="hidden lg:flex items-center space-x-8 text-sm">
+            <Link href="#">Auctions</Link>
+            <Link href="#">Changelog</Link>
           </div>
           <div className="flex items-center space-x-4">
             {!user ? (

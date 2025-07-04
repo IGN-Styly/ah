@@ -45,7 +45,7 @@ export default function SignIn() {
                 await authClient.signIn.social(
                   {
                     provider: "discord",
-                    callbackURL: "/dashboard",
+                    callbackURL: "/",
                   },
                   {
                     onRequest: (ctx) => {
