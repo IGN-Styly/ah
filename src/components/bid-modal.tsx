@@ -21,7 +21,7 @@ interface BidModalProps {
 export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
   const [bidAmount, setBidAmount] = useState("");
 
-  const minBid = auction.currentBid + 1;
+  const minBid = (auction.currentBid as number) + 1;
 
   const getQuickBidIncrements = (currentBid: number) => {
     if (currentBid < 100) {
@@ -51,7 +51,7 @@ export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
     }
   };
 
-  const increments = getQuickBidIncrements(auction.currentBid);
+  const increments = getQuickBidIncrements(auction.currentBid as number);
   const quickBidAmounts = increments.map((increment) => minBid + increment);
 
   const formatCurrency = (amount: number) => {
@@ -99,7 +99,7 @@ export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
               Current Bid
             </p>
             <p className="font-bold text-2xl">
-              {formatCurrency(auction.currentBid)}
+              {formatCurrency(auction.currentBid as number)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Minimum bid: {formatCurrency(minBid)}
