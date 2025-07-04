@@ -21,6 +21,7 @@ export interface AuctionGridProps {
 }
 
 interface AuctionFilter {
+  search?: string;
   listingType?: "all" | "bin" | "bid";
   ended?: boolean;
   categories:
@@ -41,6 +42,7 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
     category: props.filter?.categories,
     sort: props.filter?.sort,
     includeEnded: false,
+    search: props.filter?.search,
   });
 
   return (

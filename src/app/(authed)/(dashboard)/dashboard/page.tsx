@@ -56,6 +56,7 @@ export default function Home() {
       categories: selectedCategory,
       sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
       listingType: listingType as "bin" | "bid" | "all",
+      search: searchQuery,
     },
   };
   return (
@@ -66,14 +67,14 @@ export default function Home() {
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">Marketplace</h2>
-              <div className="flex items-center space-x-2">
-                <div className="relative w-64">
+              <div className="flex items-center space-x-2 ">
+                <div className="relative w-xl">
                   <Input
                     type="text"
                     placeholder="Search items..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 rounded-none"
                   />
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
                 </div>

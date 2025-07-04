@@ -51,46 +51,87 @@ export const get = query({
 
     let auctions = await q.collect();
 
-    // Search filter (case-insensitive, comma-separated phrase match first, then AND word search)
+    // Search filter (case-insensitive, supports enchant:"..." key:value search, comma-separated phrase match, then AND word search)
     if (args.search && args.search.trim() !== "") {
-      const searchTerm = args.search.trim().toLowerCase();
+      let searchTerm = args.search.trim().toLowerCase();
+
+      // Parse all enchant:"..." key:value searches
+      const enchantRegex = /enchant:"([^"]+)"/g;
+      let enchantPhrases: string[] = [];
+      let match;
+      while ((match = enchantRegex.exec(searchTerm)) !== null) {
+        enchantPhrases.push(match[1].trim());
+      }
+      // Remove all enchant:"..." from the search term for further processing
+      if (enchantPhrases.length > 0) {
+        searchTerm = searchTerm
+          .replace(/enchant:"([^"]+)"/g, "")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+
       // Split by comma for phrase search, trim each phrase
       const phrases = searchTerm
         .split(",")
         .map((p) => p.trim())
         .filter((p) => p.length > 0);
-      let filtered: typeof auctions = [];
-      if (phrases.length > 1) {
-        // All phrases must be present as substrings in title or lore
-        filtered = auctions.filter((a) => {
-          const title = a.title.toLowerCase();
+
+      let filtered: typeof auctions = auctions;
+
+      // If enchant:"..." is present, filter by all phrases in lore (AND logic)
+      if (enchantPhrases.length > 0) {
+        filtered = filtered.filter((a) => {
           const lore = a.lore.toLowerCase();
-          return phrases.every(
-            (phrase) => title.includes(phrase) || lore.includes(phrase),
-          );
-        });
-      } else {
-        // Single phrase: behave as before
-        filtered = auctions.filter(
-          (a) =>
-            a.title.toLowerCase().includes(searchTerm) ||
-            a.lore.toLowerCase().includes(searchTerm),
-        );
-      }
-      // Fallback: if no results, do AND word search for all words in all phrases
-      if (filtered.length === 0) {
-        const words =
-          phrases.length > 1
-            ? phrases.flatMap((p) => p.split(/\s+/))
-            : searchTerm.split(/\s+/);
-        filtered = auctions.filter((a) => {
-          const title = a.title.toLowerCase();
-          const lore = a.lore.toLowerCase();
-          return words.every(
-            (word) => title.includes(word) || lore.includes(word),
+          return enchantPhrases.every((phrase) =>
+            lore.includes(phrase.toLowerCase()),
           );
         });
       }
+
+      // If there are still search terms left, apply phrase/word search
+      if (phrases.length > 0 && phrases.some((p) => p.length > 0)) {
+        if (phrases.length > 1) {
+          // All phrases must be present as substrings in title or lore
+          filtered = filtered.filter((a) => {
+            const title = a.title.toLowerCase();
+            const lore = a.lore.toLowerCase();
+            return phrases.every(
+              (phrase) => title.includes(phrase) || lore.includes(phrase),
+            );
+          });
+        } else {
+          // Single phrase: behave as before
+          filtered = filtered.filter(
+            (a) =>
+              a.title.toLowerCase().includes(phrases[0]) ||
+              a.lore.toLowerCase().includes(phrases[0]),
+          );
+        }
+        // Fallback: if no results, do AND word search for all words in all phrases
+        if (filtered.length === 0) {
+          const words =
+            phrases.length > 1
+              ? phrases.flatMap((p) => p.split(/\s+/))
+              : phrases[0].split(/\s+/);
+          filtered = auctions.filter((a) => {
+            const title = a.title.toLowerCase();
+            const lore = a.lore.toLowerCase();
+            // If enchantPhrases are present, keep that filter
+            if (
+              enchantPhrases.length > 0 &&
+              !enchantPhrases.every((phrase) =>
+                lore.includes(phrase.toLowerCase()),
+              )
+            ) {
+              return false;
+            }
+            return words.every(
+              (word) => title.includes(word) || lore.includes(word),
+            );
+          });
+        }
+      }
+
       auctions = filtered;
     }
 
