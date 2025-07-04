@@ -15,6 +15,7 @@ export const get = query({
     includeEnded: v.optional(v.boolean()),
     category: v.optional(v.string()),
     sort: v.optional(v.string()),
+    listingType: v.optional(v.string()), // NEW
   },
   handler: async (ctx, args) => {
     let q = ctx.db.query("auctions");
@@ -22,6 +23,23 @@ export const get = query({
     // Filter by category if provided and not "all"
     if (args.category && args.category !== "all") {
       q = q.filter((row) => row.eq(row.field("category"), args.category));
+    }
+
+    // Filter by listing type
+    if (args.listingType === "bin") {
+      q = q.filter((row) =>
+        row.and(
+          row.neq(row.field("buyNowPrice"), undefined),
+          row.neq(row.field("buyNowPrice"), null),
+        ),
+      );
+    } else if (args.listingType === "bid") {
+      q = q.filter((row) =>
+        row.or(
+          row.eq(row.field("buyNowPrice"), undefined),
+          row.eq(row.field("buyNowPrice"), null),
+        ),
+      );
     }
 
     // Filter out ended auctions if includeEnded is false
@@ -35,10 +53,38 @@ export const get = query({
     // Sorting
     switch (args.sort) {
       case SortOptions.PRICE_LOW:
-        auctions.sort((a, b) => a.currentBid - b.currentBid);
+        auctions.sort((a, b) => {
+          const aBid =
+            typeof a.currentBid === "number" && !isNaN(a.currentBid)
+              ? a.currentBid
+              : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                ? a.buyNowPrice
+                : Infinity;
+          const bBid =
+            typeof b.currentBid === "number" && !isNaN(b.currentBid)
+              ? b.currentBid
+              : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                ? b.buyNowPrice
+                : Infinity;
+          return aBid - bBid;
+        });
         break;
       case SortOptions.PRICE_HIGH:
-        auctions.sort((a, b) => b.currentBid - a.currentBid);
+        auctions.sort((a, b) => {
+          const aBid =
+            typeof a.currentBid === "number" && !isNaN(a.currentBid)
+              ? a.currentBid
+              : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                ? a.buyNowPrice
+                : -Infinity;
+          const bBid =
+            typeof b.currentBid === "number" && !isNaN(b.currentBid)
+              ? b.currentBid
+              : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                ? b.buyNowPrice
+                : -Infinity;
+          return bBid - aBid;
+        });
         break;
       case SortOptions.NEWEST:
         auctions.sort((a, b) => b.created - a.created);

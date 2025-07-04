@@ -36,9 +36,10 @@ interface AuctionFilter {
 }
 export default function AuctionGrid({ ...props }: AuctionGridProps) {
   const auctions = useQuery(api.auction.get, {
-    sort: props.filter?.sort,
+    listingType: props.filter?.listingType,
     category: props.filter?.categories,
-    includeEnded: props.filter?.ended,
+    sort: props.filter?.sort,
+    includeEnded: false,
   });
 
   return (

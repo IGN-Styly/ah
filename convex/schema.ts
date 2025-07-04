@@ -18,7 +18,7 @@ export default defineSchema({
     title: v.string(),
     lore: v.string(),
     image: v.string(),
-    currentBid: v.number(),
+    currentBid: v.optional(v.number()),
     buyNowPrice: v.optional(v.number()),
     end: v.number(),
     bidcount: v.number(),

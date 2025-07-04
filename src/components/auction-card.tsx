@@ -158,14 +158,16 @@ export function AuctionCard({ auction }: AuctionCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </div>
 
-          {auction.buyNowPrice && (
-            <div className="absolute top-2 right-2">
-              <Badge className="rounded-none text-xs bg-yellow-500 text-yellow-950 font-bold px-2 py-1 border border-yellow-600 shadow-[2px_2px_0_0_rgba(0,0,0,0.5)] uppercase tracking-wider">
-                <Zap className="w-3 h-3 mr-1" />
-                BIN
-              </Badge>
-            </div>
-          )}
+          {/* Listing type badge */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+            {auction.buyNowPrice !== undefined &&
+              auction.buyNowPrice !== null && (
+                <Badge className="rounded-none text-xs bg-yellow-500 text-yellow-950 font-bold px-2 py-1 border border-yellow-600 shadow-[2px_2px_0_0_rgba(0,0,0,0.5)] uppercase tracking-wider flex items-center">
+                  <Zap className="w-3 h-3 mr-1" />
+                  BIN
+                </Badge>
+              )}
+          </div>
         </div>
 
         <CardContent className="p-3 space-y-3">
@@ -179,7 +181,9 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                 BID
               </span>
               <div className="font-semibold text-base text-primary">
-                {formatCurrency(auction.currentBid)}
+                {auction.currentBid !== undefined && !isNaN(auction.currentBid)
+                  ? formatCurrency(auction.currentBid)
+                  : "N/A"}
               </div>
             </div>
             <div className="bg-muted p-2 border rounded-none text-center">
@@ -187,7 +191,8 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                 BIN
               </span>
               <div className="font-semibold text-base text-primary">
-                {auction.buyNowPrice
+                {auction.buyNowPrice !== undefined &&
+                auction.buyNowPrice !== null
                   ? formatCurrency(auction.buyNowPrice)
                   : "N/A"}
               </div>
@@ -212,23 +217,41 @@ export function AuctionCard({ auction }: AuctionCardProps) {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
-              onClick={() => setShowBidModal(true)}
-            >
-              BID
-            </Button>
-            {auction.buyNowPrice && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
-                onClick={() => setShowBuyNowModal(true)}
-              >
-                BUY
-              </Button>
-            )}
+            {(auction.buyNowPrice === undefined ||
+              auction.buyNowPrice === null) &&
+              auction.currentBid !== undefined &&
+              !isNaN(auction.currentBid) && (
+                <Button
+                  size="sm"
+                  className="w-full rounded-none text-sm font-mono font-black"
+                  onClick={() => setShowBidModal(true)}
+                >
+                  BID
+                </Button>
+              )}
+            {auction.buyNowPrice !== undefined &&
+              auction.buyNowPrice !== null && (
+                <>
+                  {auction.currentBid !== undefined &&
+                    !isNaN(auction.currentBid) && (
+                      <Button
+                        size="sm"
+                        className="flex-1 rounded-none text-sm font-mono font-black"
+                        onClick={() => setShowBidModal(true)}
+                      >
+                        BID
+                      </Button>
+                    )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
+                    onClick={() => setShowBuyNowModal(true)}
+                  >
+                    BUY
+                  </Button>
+                </>
+              )}
           </div>
         </CardContent>
       </Card>
@@ -312,7 +335,9 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                         CURRENT BID
                       </span>
                       <div className="font-semibold text-lg text-primary">
-                        {formatCurrency(auction.currentBid)}
+                        {auction.currentBid
+                          ? formatCurrency(auction.currentBid)
+                          : "N/A"}
                       </div>
                     </div>
                     <div className="bg-muted p-3 border rounded-none text-center">
@@ -354,15 +379,29 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                   </div>
 
                   <div className="flex gap-2 mt-4">
-                    <Button
-                      className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setShowBidModal(true);
-                      }}
-                    >
-                      PLACE BID
-                    </Button>
+                    {(auction.currentBid == auction.buyNowPrice) == false ? (
+                      <></>
+                    ) : (
+                      <Button
+                        disabled
+                        className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
+                      >
+                        N/A
+                      </Button>
+                    )}
+                    {auction.currentBid ? (
+                      <Button
+                        className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
+                        onClick={() => {
+                          setIsModalOpen(false);
+                          setShowBidModal(true);
+                        }}
+                      >
+                        PLACE BID
+                      </Button>
+                    ) : (
+                      <></>
+                    )}
                     {auction.buyNowPrice && (
                       <Button
                         variant="outline"
