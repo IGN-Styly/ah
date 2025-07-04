@@ -30,7 +30,7 @@ export default function Navbar() {
   const isDark = theme === "dark" || theme === undefined;
 
   return (
-    <nav className="relative z-50 px-6 py-4">
+    <nav className="sticky z-50 px-6 py-4 top-0">
       <div
         className={`mx-auto rounded-2xl px-6 backdrop-blur-[5px] h-[76px] ${
           isDark
