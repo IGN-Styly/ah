@@ -15,7 +15,7 @@ import { SortOptions } from "../../convex/auction";
 import { ArrowDownUp } from "lucide-react";
 
 // Props for the AuctionGrid component
-interface AuctionGridProps {
+export interface AuctionGridProps {
   filter?: AuctionFilter;
   className?: string;
 }
@@ -29,7 +29,7 @@ interface AuctionFilter {
     | "accessories"
     | "consumables"
     | "blocks"
-    | "toolsnequipment"
+    | "tools"
     | "misc"
     | "all";
   sort: "highlow" | "lowhigh" | "soon" | "new" | "bids";

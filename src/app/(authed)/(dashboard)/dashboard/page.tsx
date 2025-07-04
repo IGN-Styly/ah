@@ -1,5 +1,5 @@
 "use client";
-import AuctionGrid from "@/components/auction-grid";
+import AuctionGrid, { AuctionGridProps } from "@/components/auction-grid";
 import Navbar from "@/components/navbar";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -51,6 +51,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 10; // This would typically come from your API or data source
 
+  let propsf: AuctionGridProps = { filter: { categories: selectedCategory } };
   return (
     <div className=" ">
       <Navbar />
@@ -94,7 +95,7 @@ export default function Home() {
         <div className="flex">
           <div className="mt-4">
             <Card className="min-w-[240px] p-4 rounded-none">
-              <h3 className="text-lg font-semibold mb-4">Filters</h3>
+              <h3 className="text-lg font-semibold">Filters</h3>
 
               <div className="space-y-4">
                 {/* Listing Type Filter */}
@@ -166,6 +167,13 @@ export default function Home() {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="tools" id="category-tools" />
                       <Label htmlFor="category-tools">Tools & Equipment</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="equipment"
+                        id="category-equipment"
+                      />
+                      <Label htmlFor="category-equipment">Equipment</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="misc" id="category-misc" />
