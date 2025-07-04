@@ -217,6 +217,17 @@ export function AuctionCard({ auction }: AuctionCardProps) {
           </div>
 
           <div className="flex gap-2">
+            {(auction.buyNowPrice === auction.currentBid) == false ? (
+              <></>
+            ) : (
+              <Button
+                size="sm"
+                className="w-full rounded-none text-sm font-mono font-black"
+                disabled
+              >
+                N/A
+              </Button>
+            )}
             {(auction.buyNowPrice === undefined ||
               auction.buyNowPrice === null) &&
               auction.currentBid !== undefined &&
