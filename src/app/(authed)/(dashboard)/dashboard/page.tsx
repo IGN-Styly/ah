@@ -35,7 +35,7 @@ import { useState } from "react";
 export default function Home() {
   let user = useQuery(api.auth.getCurrentUser);
   const [listingType, setListingType] = useState("all");
-  const [sortBy, setSortBy] = useState("endingSoon");
+  const [sortBy, setSortBy] = useState("soon");
   type CategoryKey =
     | "weapons"
     | "armor"
@@ -51,7 +51,13 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = 10; // This would typically come from your API or data source
 
-  let propsf: AuctionGridProps = { filter: { categories: selectedCategory } };
+  let propsf: AuctionGridProps = {
+    filter: {
+      categories: selectedCategory,
+      sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
+      listingType: listingType as "bin" | "bid" | "all",
+    },
+  };
   return (
     <div className=" ">
       <Navbar />
@@ -80,11 +86,11 @@ export default function Home() {
                       </div>
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
-                      <SelectItem value="priceHigh">Highest Price</SelectItem>
-                      <SelectItem value="priceLow">Lowest Price</SelectItem>
-                      <SelectItem value="endingSoon">Ending Soon</SelectItem>
-                      <SelectItem value="newest">Newest</SelectItem>
-                      <SelectItem value="mostBids">Most Bids</SelectItem>
+                      <SelectItem value="highlow">Highest Price</SelectItem>
+                      <SelectItem value="lowhigh">Lowest Price</SelectItem>
+                      <SelectItem value="soon">Ending Soon</SelectItem>
+                      <SelectItem value="new">Newest</SelectItem>
+                      <SelectItem value="bids">Most Bids</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -186,7 +192,7 @@ export default function Home() {
           </div>
           <div className="flex-1">
             <div className="mb-4">
-              <AuctionGrid className="mt-4" />
+              <AuctionGrid filter={propsf.filter} className="mt-4" />
             </div>
             <div className="flex justify-center mt-8">
               <Pagination>

@@ -35,5 +35,9 @@ export default defineSchema({
     .index("by_bidcount", ["bidcount"])
     .index("by_category", ["category"])
     .index("by_buyNowPrice", ["buyNowPrice"])
-    .index("by_created", ["created"]),
+    .index("by_created", ["created"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["lore"],
+    }),
 });

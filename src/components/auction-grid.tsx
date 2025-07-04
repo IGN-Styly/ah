@@ -35,6 +35,7 @@ interface AuctionFilter {
   sort: "highlow" | "lowhigh" | "soon" | "new" | "bids";
 }
 export default function AuctionGrid({ ...props }: AuctionGridProps) {
+  console.log(props.filter);
   const auctions = useQuery(api.auction.get, {
     listingType: props.filter?.listingType,
     category: props.filter?.categories,

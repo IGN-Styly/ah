@@ -16,6 +16,7 @@ export const get = query({
     category: v.optional(v.string()),
     sort: v.optional(v.string()),
     listingType: v.optional(v.string()), // NEW
+    search: v.optional(v.string()), // Add search argument
   },
   handler: async (ctx, args) => {
     let q = ctx.db.query("auctions");
@@ -49,6 +50,49 @@ export const get = query({
     }
 
     let auctions = await q.collect();
+
+    // Search filter (case-insensitive, comma-separated phrase match first, then AND word search)
+    if (args.search && args.search.trim() !== "") {
+      const searchTerm = args.search.trim().toLowerCase();
+      // Split by comma for phrase search, trim each phrase
+      const phrases = searchTerm
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+      let filtered: typeof auctions = [];
+      if (phrases.length > 1) {
+        // All phrases must be present as substrings in title or lore
+        filtered = auctions.filter((a) => {
+          const title = a.title.toLowerCase();
+          const lore = a.lore.toLowerCase();
+          return phrases.every(
+            (phrase) => title.includes(phrase) || lore.includes(phrase),
+          );
+        });
+      } else {
+        // Single phrase: behave as before
+        filtered = auctions.filter(
+          (a) =>
+            a.title.toLowerCase().includes(searchTerm) ||
+            a.lore.toLowerCase().includes(searchTerm),
+        );
+      }
+      // Fallback: if no results, do AND word search for all words in all phrases
+      if (filtered.length === 0) {
+        const words =
+          phrases.length > 1
+            ? phrases.flatMap((p) => p.split(/\s+/))
+            : searchTerm.split(/\s+/);
+        filtered = auctions.filter((a) => {
+          const title = a.title.toLowerCase();
+          const lore = a.lore.toLowerCase();
+          return words.every(
+            (word) => title.includes(word) || lore.includes(word),
+          );
+        });
+      }
+      auctions = filtered;
+    }
 
     // Sorting
     switch (args.sort) {
