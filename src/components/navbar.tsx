@@ -1,0 +1,157 @@
+"use client";
+import { Button } from "@/components/ui/button";
+import { Apple, Landmark, User } from "lucide-react";
+import Link from "next/link";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "./ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { authClient } from "@/lib/auth-client";
+import { useTheme } from "next-themes";
+import { ModeToggle } from "./theme";
+
+export default function Navbar() {
+  let user = useQuery(api.auth.getCurrentUser);
+  const { theme } = useTheme();
+  const isDark = theme === "dark" || theme === undefined;
+
+  return (
+    <nav className="relative z-50 px-6 py-4">
+      <div
+        className={`mx-auto rounded-2xl px-6 backdrop-blur-[5px] h-[76px] ${
+          isDark
+            ? "bg-[linear-gradient(137deg,rgba(17,18,20,.75)_4.87%,rgba(12,13,15,.9)_75.88%)]"
+            : "bg-[linear-gradient(137deg,rgba(240,240,245,.85)_4.87%,rgba(255,255,255,.95)_75.88%)]"
+        }`}
+        style={{
+          border: isDark
+            ? "1px solid var(--Card-Border,hsla(0,0%,100%,.06))"
+            : "1px solid var(--Card-Border,hsla(0,0%,0%,.1))",
+          boxShadow: isDark
+            ? "inset 0 1px 1px 0 hsla(0,0%,100%,.15)"
+            : "inset 0 1px 1px 0 hsla(0,0%,0%,.05)",
+          maxWidth: "var(--container-width, 1204px)",
+        }}
+      >
+        <div className="flex items-center justify-between h-full">
+          <div className="flex items-center space-x-3">
+            <Landmark className={isDark ? "text-white" : "text-gray-800"} />
+            <span
+              className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-800"}`}
+            >
+              Auction House
+            </span>
+          </div>
+
+          <div
+            className={`hidden lg:flex items-center space-x-8 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}
+          >
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Store
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Pro
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              AI
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              iOS
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Teams
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Developers
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Changelog
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Blog
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Pricing
+            </Link>
+            <Link
+              href="#"
+              className={`transition-colors ${isDark ? "hover:text-white" : "hover:text-black"}`}
+            >
+              Log in
+            </Link>
+          </div>
+          <div className="flex items-center space-x-4">
+            {!user ? (
+              <Link href="/signin">
+                <Button>Sign In</Button>
+              </Link>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button>
+                    <User />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>@{user?.name}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>Inventory</DropdownMenuItem>
+                  <DropdownMenuItem>My auctions</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await authClient.signOut();
+                    }}
+                  >
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <ModeToggle />
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}

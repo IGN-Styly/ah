@@ -1,5 +1,6 @@
 "use client";
 import AuctionGrid from "@/components/auction-grid";
+import Navbar from "@/components/navbar";
 import { example, NBTDisplay, parseNBT } from "@/components/nbt";
 import SignIn from "@/components/signIn";
 import { ModeToggle } from "@/components/theme";
@@ -14,13 +15,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
+import { api } from "@convex/_generated/api";
+import { useQuery } from "convex/react";
 import Image from "next/image";
 
 export default function Home() {
-  let user = authClient.useSession();
+  let user = useQuery(api.auth.getCurrentUser);
 
   return (
     <div className=" ">
+      <Navbar></Navbar>
       <main className="container mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -30,7 +34,7 @@ export default function Home() {
         <SignIn />
         <AuctionGrid />
         <ModeToggle />
-        {user.data ? <>{user.data.user.name}</> : <>2</>}
+        {user?._id ? <>{user.balance}</> : <>Signed out</>}
       </main>
     </div>
   );

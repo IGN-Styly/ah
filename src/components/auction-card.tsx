@@ -335,9 +335,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                       <span className="font-medium text-muted-foreground uppercase text-sm">
                         SELLER:
                       </span>
-                      <span className="font-bold text-foreground">
-                        {auction.seller}
-                      </span>
+                      <span className="font-bold text-foreground">{name}</span>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
