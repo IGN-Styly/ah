@@ -25,14 +25,11 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
   // Calculate auction time remaining
   const getAuctionTimes = useCallback(() => {
-    // Creation time in milliseconds (Convex timestamp in microseconds)
-    const creationTimeMs = auction._creationTime;
-
-    // Auction end time = creation time + length (in seconds)
-    const endTimeMs = creationTimeMs + auction.length * 1000;
+    // Auction end time in ms (from schema)
+    const endTimeMs = auction.end;
     const endTime = new Date(endTimeMs);
 
-    // Current time in milliseconds
+    // Current time in ms
     const nowMs = Date.now();
 
     // If auction has ended
@@ -67,7 +64,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
       isEnded: false,
       endTime,
     };
-  }, [auction._creationTime, auction.length]);
+  }, [auction.end]);
 
   const [auctionTimes, setAuctionTimes] = useState(getAuctionTimes());
   const { timeRemaining, endTimeFormatted, isEnded } = auctionTimes;

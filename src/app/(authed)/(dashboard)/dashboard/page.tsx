@@ -35,7 +35,7 @@ import { useState } from "react";
 export default function Home() {
   let user = useQuery(api.auth.getCurrentUser);
   const [listingType, setListingType] = useState("all");
-  const [sortBy, setSortBy] = useState("random");
+  const [sortBy, setSortBy] = useState("endingSoon");
   type CategoryKey =
     | "weapons"
     | "armor"
@@ -72,17 +72,18 @@ export default function Home() {
                 </div>
                 <div className="w-48">
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-none">
                       <div className="flex items-center gap-2">
                         <ArrowDownUp className="h-4 w-4" />
                         <SelectValue placeholder="Sort by" />
                       </div>
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="highest">Highest Price</SelectItem>
-                      <SelectItem value="lowest">Lowest Price</SelectItem>
-                      <SelectItem value="ending">Ending Soon</SelectItem>
-                      <SelectItem value="random">Random</SelectItem>
+                    <SelectContent className="rounded-none">
+                      <SelectItem value="priceHigh">Highest Price</SelectItem>
+                      <SelectItem value="priceLow">Lowest Price</SelectItem>
+                      <SelectItem value="endingSoon">Ending Soon</SelectItem>
+                      <SelectItem value="newest">Newest</SelectItem>
+                      <SelectItem value="mostBids">Most Bids</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -91,7 +92,7 @@ export default function Home() {
           </div>
         </Card>
         <div className="flex">
-          <div className="mr-2 mt-4">
+          <div className="mt-4">
             <Card className="min-w-[240px] p-4 rounded-none">
               <h3 className="text-lg font-semibold mb-4">Filters</h3>
 
@@ -177,7 +178,7 @@ export default function Home() {
           </div>
           <div className="flex-1">
             <div className="mb-4">
-              <AuctionGrid />
+              <AuctionGrid className="mt-4" />
             </div>
             <div className="flex justify-center mt-8">
               <Pagination>
