@@ -45,19 +45,17 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
     includeEnded: false,
     search: props.filter?.search,
   });
+  const loading = Array.from({ length: 24 }, (_, i) => i + 1);
 
   return (
     <main className="p-4">
       <div className="max-w-[1600px] mx-auto">
         <div className="grid grid-cols-2 sm:grid-cols-d:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {auctions ? (
-            auctions.map((auction) => (
-              <AuctionCard key={auction._id} auction={auction} />
-            ))
-          ) : (
-            <></>
-          )}
-          <LoadingCard />
+          {auctions
+            ? auctions.map((auction) => (
+                <AuctionCard key={auction._id} auction={auction} />
+              ))
+            : loading.map((c) => <LoadingCard key={c} />)}
         </div>
       </div>
     </main>
