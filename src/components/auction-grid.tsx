@@ -13,6 +13,7 @@ import {
 } from "./ui/select";
 import { SortOptions } from "../../convex/auction";
 import { ArrowDownUp } from "lucide-react";
+import { LoadingCard } from "./loading-card";
 
 // Props for the AuctionGrid component
 export interface AuctionGridProps {
@@ -46,7 +47,7 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
   });
 
   return (
-    <main className=" p-4">
+    <main className="p-4">
       <div className="max-w-[1600px] mx-auto">
         <div className="grid grid-cols-2 sm:grid-cols-d:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {auctions ? (
@@ -56,6 +57,7 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
           ) : (
             <></>
           )}
+          <LoadingCard />
         </div>
       </div>
     </main>

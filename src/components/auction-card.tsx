@@ -138,7 +138,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
         ref={cardRef}
         className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1"
       >
-        <div className="relative">
+        <div className="relative -mt-1">
           <div
             className="cursor-pointer"
             onMouseEnter={() => setIsHovered(true)}
