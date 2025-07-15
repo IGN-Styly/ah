@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { NBTDisplay } from "./nbt";
 import { Doc } from "@convex/_generated/dataModel";
+import AppConfig from "@/lib/config";
 
 interface BuyNowModalProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
   };
 
   const itemPrice = auction.buyNowPrice || 0;
-  const processingFee = Math.round(itemPrice * 0.025); // 2.9% processing fee
+  const processingFee = Math.round(itemPrice * AppConfig.TAX); // 2.9% processing fee
   const totalPrice = itemPrice + processingFee;
 
   return (
