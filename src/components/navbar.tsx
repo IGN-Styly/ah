@@ -24,6 +24,8 @@ import { authClient } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { ModeToggle } from "./theme";
 import { redirect, useRouter } from "next/navigation";
+import { Avatar, AvatarImage } from "./ui/avatar";
+import { formatPriceBNK } from "@/lib/price";
 
 export default function Navbar() {
   let user = useQuery(api.auth.getCurrentUser);
@@ -77,7 +79,20 @@ export default function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuLabel>@{user?.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    <div className="flex-row flex gap-2 items-center">
+                      <Avatar>
+                        <AvatarImage src={user.image}></AvatarImage>
+                      </Avatar>
+                      @{user?.name}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>
+                    <div className="flex-row flex gap-2 items-center">
+                      Purse: ${formatPriceBNK(user.balance as number)}
+                    </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={async () => {
