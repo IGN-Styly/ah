@@ -6,7 +6,7 @@ import Navbar from "@/components/navbar";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 
-export default function RootLayout({
+export default function HomeLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

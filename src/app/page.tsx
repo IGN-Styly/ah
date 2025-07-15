@@ -18,10 +18,13 @@ import { authClient } from "@/lib/auth-client";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 export default function Home() {
   let user = useQuery(api.auth.getCurrentUser);
-
+  if (user) {
+    redirect("/dashboard");
+  }
   return (
     <div className=" ">
       <Navbar></Navbar>
@@ -34,7 +37,6 @@ export default function Home() {
         <SignIn />
         <AuctionGrid />
         <ModeToggle />
-        {user?._id ? <>{user.balance}</> : <>Signed out</>}
       </main>
     </div>
   );

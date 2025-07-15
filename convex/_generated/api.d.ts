@@ -11,6 +11,7 @@
 import type * as auction from "../auction.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as item from "../item.js";
 import type * as users from "../users.js";
 import type * as util from "../util.js";
 
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   auction: typeof auction;
   auth: typeof auth;
   http: typeof http;
+  item: typeof item;
   users: typeof users;
   util: typeof util;
 }>;

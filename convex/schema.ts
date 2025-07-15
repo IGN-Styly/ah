@@ -3,11 +3,13 @@ import { v } from "convex/values";
 
 export default defineSchema({
   items: defineTable({
+    category: v.string(),
     title: v.string(),
     lore: v.string(),
     image: v.string(),
-  }),
-
+  })
+    .index("by_title", ["title"])
+    .index("by_category", ["category"]),
   users: defineTable({
     name: v.string(),
     balance: v.number(),

@@ -23,12 +23,13 @@ import { api } from "@convex/_generated/api";
 import { authClient } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { ModeToggle } from "./theme";
+import { redirect, useRouter } from "next/navigation";
 
 export default function Navbar() {
   let user = useQuery(api.auth.getCurrentUser);
   const { theme } = useTheme();
   const isDark = theme === "dark" || theme === undefined;
-
+  let route = useRouter();
   return (
     <nav className="sticky z-50 px-6 py-4 top-0">
       <div
@@ -76,11 +77,18 @@ export default function Navbar() {
                 <DropdownMenuContent>
                   <DropdownMenuLabel>@{user?.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Inventory</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      redirect("/inventory");
+                    }}
+                  >
+                    Inventory
+                  </DropdownMenuItem>
                   <DropdownMenuItem>My auctions</DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={async () => {
                       await authClient.signOut();
+                      route.refresh();
                     }}
                   >
                     Sign Out

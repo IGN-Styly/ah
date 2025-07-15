@@ -153,6 +153,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               alt={auction.title}
               width={200}
               height={200}
+              style={{ imageRendering: "pixelated" }}
               className="w-full aspect-square object-cover border-b-2 border-border"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />

@@ -19,8 +19,9 @@ import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Landmark } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+export default function SigninPage() {
   let user = useQuery(api.auth.getCurrentUser);
 
   return (
@@ -38,10 +39,10 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black"></div>
 
       <div className="absolute top-0 left-0">
-        <div className="flex items-center space-x-3 m-12">
+        <Link href={"/"} className="flex items-center space-x-3 m-12">
           <Landmark />
           <span className="text-xl font-semibold">Auction House</span>
-        </div>
+        </Link>
       </div>
       <div className="w-full max-w-md m-12">
         <SignIn />
