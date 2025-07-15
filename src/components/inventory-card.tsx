@@ -1,51 +1,104 @@
 "use client";
 import Image from "next/image";
 import { Card } from "./ui/card";
-import { useEffect, useRef, useState, MouseEvent } from "react";
+import { useEffect, useRef, useState, MouseEvent, ReactNode } from "react";
 import { Doc } from "@convex/_generated/dataModel";
 import { NBTDisplay } from "./nbt";
 import { ItemImage } from "./ItemImage";
 import { Button } from "./ui/button";
+
 import AppConfig from "@/lib/config";
 
+// Utility functions for price formatting and parsing
+const formatPrice = (price: number): string => {
+  if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(2)}b`;
+  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(2)}m`;
+  if (price >= 1_000) return `${(price / 1_000).toFixed(2)}k`;
+  return price.toFixed(2);
+};
+
+const parsePrice = (value: string | null): number | null => {
+  if (!value) return null;
+
+  const numericPart = parseFloat(value);
+  if (isNaN(numericPart)) return null;
+
+  const unit = value.trim().slice(-1).toLowerCase();
+  switch (unit) {
+    case "k":
+      return numericPart * 1_000;
+    case "m":
+      return numericPart * 1_000_000;
+    case "b":
+      return numericPart * 1_000_000_000;
+    default:
+      return numericPart;
+  }
+};
+
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
-  const formatPrice = (price: number) => {
-    if (price >= 1000000000) return `${(price / 1000000000).toFixed(2)}b`;
-    if (price >= 1000000) return `${(price / 1000000).toFixed(2)}m`;
-    if (price >= 1000) return `${(price / 1000).toFixed(2)}k`;
+  const formatPrice = (price: number): string => {
+    if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(2)}b`;
+    if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(2)}m`;
+    if (price >= 1_000) return `${(price / 1_000).toFixed(2)}k`;
     return price.toFixed(2);
   };
-  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
-  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
-  const [binPrice, setBinPrice] = useState<number | null>(null);
-  const [bidPrice, setBidPrice] = useState<number | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const parsePrice = (value: string | null): number | null => {
+    if (!value) return null;
+
+    const numericPart = parseFloat(value);
+    if (isNaN(numericPart)) return null;
+
+    const unit = value.trim().slice(-1).toLowerCase();
+    switch (unit) {
+      case "k":
+        return numericPart * 1_000;
+      case "m":
+        return numericPart * 1_000_000;
+      case "b":
+        return numericPart * 1_000_000_000;
+      default:
+        return numericPart;
+    }
+  };
+
+  const [modalState, setModalState] = useState({
+    isSellModalOpen: false,
+    isReceiptModalOpen: false,
+    isItemModalOpen: false,
+  });
+
+  const [hoverState, setHoverState] = useState({
+    isHovered: false,
+    position: { x: 0, y: 0 },
+  });
+
+  const [prices, setPrices] = useState({
+    binPrice: null as number | null,
+    bidPrice: null as number | null,
+  });
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isHovered && cardRef.current && hoverRef.current) {
+    if (hoverState.isHovered && cardRef.current && hoverRef.current) {
       const cardRect = cardRef.current.getBoundingClientRect();
       const hoverRect = hoverRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
 
-      // Center horizontally over the card
-      const x = cardRect.left + cardRect.width / 2 - hoverRect.width / 2;
-      // Position the hover to appear directly on top of the card
-      const y = cardRect.top + 20; // Small offset from the top of the card
-
-      // Handle edge cases where hover might go off-screen
-      const adjustedX = Math.max(
+      const x = Math.max(
         16,
-        Math.min(x, viewportWidth - hoverRect.width - 16),
+        Math.min(
+          cardRect.left + cardRect.width / 2 - hoverRect.width / 2,
+          viewportWidth - hoverRect.width - 16,
+        ),
       );
+      const y = cardRect.top + 20;
 
-      setHoverPosition({ x: adjustedX, y });
+      setHoverState((prev) => ({ ...prev, position: { x, y } }));
     }
-  }, [isHovered]);
+  }, [hoverState.isHovered]);
 
   return (
     <>
@@ -56,11 +109,15 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
         <div className="relative -mt-1">
           <div
             className="cursor-pointer"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={() =>
+              setHoverState({ ...hoverState, isHovered: true })
+            }
+            onMouseLeave={() =>
+              setHoverState({ ...hoverState, isHovered: false })
+            }
             onClick={(e: MouseEvent) => {
               e.preventDefault();
-              setIsModalOpen(true);
+              setModalState({ ...modalState, isItemModalOpen: true });
             }}
           >
             <ItemImage image={item.image} title={item.title} />
@@ -75,14 +132,13 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
       </Card>
 
       {/* Hover Details */}
-      {isHovered && (
+      {hoverState.isHovered && (
         <div
           ref={hoverRef}
-          className="fixed z-50 w-[25rem] bg-background/95 backdrop-blur-sm border-4 border-border shadow-[0px_0px_16px_0px_rgba(0,0,0,0.4)] rounded-none"
+          className="fixed z-50 w-[25rem] bg-background/95 backdrop-blur-sm border-4 border-border shadow-lg rounded-none"
           style={{
-            left: `${hoverPosition.x}px`,
-            top: `${hoverPosition.y}px`,
-            transform: "translateZ(0)",
+            left: `${hoverState.position.x}px`,
+            top: `${hoverState.position.y}px`,
             pointerEvents: "none",
           }}
         >
@@ -91,16 +147,18 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
               ITEM DETAILS
             </h4>
             <div className="space-y-1 text-xs">
-              <NBTDisplay nbtData={item.lore}></NBTDisplay>
+              <NBTDisplay nbtData={item.lore} />
             </div>
           </div>
         </div>
       )}
       {/* Modal Details */}
-      {isModalOpen && (
+      {modalState.isItemModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setIsModalOpen(false)}
+          onClick={() =>
+            setModalState({ ...modalState, isItemModalOpen: false })
+          }
         >
           <div
             className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-4xl w-full max-h-[90vh] overflow-auto"
@@ -114,7 +172,9 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 <Button
                   variant="ghost"
                   className="h-8 w-8 p-0 rounded-full"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() =>
+                    setModalState({ ...modalState, isItemModalOpen: false })
+                  }
                 >
                   ✕
                 </Button>
@@ -137,10 +197,13 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                   <div className="flex gap-2 mt-4">
                     <Button
                       className="w-full rounded-none text-sm font-mono font-black"
-                      onClick={() => {
-                        setIsSellModalOpen(true);
-                        setIsModalOpen(false);
-                      }}
+                      onClick={() =>
+                        setModalState({
+                          isSellModalOpen: true,
+                          isReceiptModalOpen: false,
+                          isItemModalOpen: false,
+                        })
+                      }
                     >
                       SELL ITEM
                     </Button>
@@ -152,10 +215,139 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                     ITEM DETAILS
                   </h4>
                   <div className="space-y-2">
-                    <NBTDisplay nbtData={item.lore}></NBTDisplay>
+                    <NBTDisplay nbtData={item.lore} />
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {modalState.isSellModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() =>
+            setModalState({ ...modalState, isSellModalOpen: false })
+          }
+        >
+          <div
+            className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-lg w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-foreground uppercase tracking-wider text-lg mb-4">
+              Set Prices for Selling
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  Buy It Now (BIN) Price
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-border p-2 rounded-none"
+                  value={prices.binPrice !== null ? prices.binPrice : ""}
+                  onChange={(e) =>
+                    setPrices((prev) => ({
+                      ...prev,
+                      binPrice: parsePrice(e.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  Starting Bid Price
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-border p-2 rounded-none"
+                  value={prices.bidPrice !== null ? prices.bidPrice : ""}
+                  onChange={(e) =>
+                    setPrices((prev) => ({
+                      ...prev,
+                      bidPrice: parsePrice(e.target.value),
+                    }))
+                  }
+                />
+              </div>
+              <Button
+                className="w-full rounded-none text-sm font-mono font-black"
+                onClick={() => {
+                  if (prices.binPrice !== null || prices.bidPrice !== null) {
+                    setModalState({
+                      isSellModalOpen: false,
+                      isReceiptModalOpen: true,
+                      isItemModalOpen: false,
+                    });
+                  }
+                }}
+                disabled={
+                  (prices.binPrice === null || prices.binPrice === 0) &&
+                  (prices.bidPrice === null || prices.bidPrice === 0)
+                }
+              >
+                CONFIRM PRICES
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {modalState.isReceiptModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() =>
+            setModalState({ ...modalState, isReceiptModalOpen: false })
+          }
+        >
+          <div
+            className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-lg w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-foreground uppercase tracking-wider text-lg mb-4">
+              Confirm Sale Details
+            </h3>
+            <div className="space-y-4 text-sm font-mono">
+              <div className="flex justify-between">
+                <span>Buy It Now (BIN) Price:</span>
+                <span>
+                  {prices.binPrice !== null
+                    ? `$${formatPrice(prices.binPrice)}`
+                    : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Starting Bid Price:</span>
+                <span>
+                  {prices.bidPrice !== null
+                    ? `$${formatPrice(prices.bidPrice)}`
+                    : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Tax:</span>
+                <span>{`$${formatPrice(
+                  ((prices.binPrice || 0) + (prices.bidPrice || 0)) *
+                    AppConfig.TAX,
+                )}`}</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span>{`$${formatPrice(
+                  (prices.binPrice || 0) +
+                    (prices.bidPrice || 0) -
+                    ((prices.binPrice || 0) + (prices.bidPrice || 0)) *
+                      AppConfig.TAX,
+                )}`}</span>
+              </div>
+              <Button
+                className="w-full rounded-none text-sm font-mono font-black mt-4"
+                onClick={() => {
+                  console.log("Item listed for sale!");
+                  setModalState({ ...modalState, isReceiptModalOpen: false });
+                }}
+              >
+                CONFIRM SALE
+              </Button>
             </div>
           </div>
         </div>
