@@ -9,14 +9,18 @@ export const ItemImage = ({
   className?: string;
   border?: boolean;
   size?: number;
+  classNameTop?: string;
 }) => {
   return (
     <>
       <div
         className={
           props.border
-            ? "aspect-square object-cover border-2 border-border p-3"
-            : "border-b-2 border-border p-3 "
+            ? cn(
+                "aspect-square object-cover border-2 border-border p-3",
+                props.classNameTop,
+              )
+            : cn("border-b-2 border-border p-3 ", props.classNameTop)
         }
       >
         <Image
