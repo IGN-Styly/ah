@@ -17,6 +17,7 @@ import { ArrowDownUp } from "lucide-react";
 import { LoadingCard } from "./loading-card";
 import { InventoryCard } from "./inventory-card";
 import { Doc } from "@convex/_generated/dataModel";
+import { LoadingInventoryCard } from "./loading-item-card";
 
 // Props for the AuctionGrid component
 export interface ItemGridProps {
@@ -51,7 +52,7 @@ export default function ItemGrid({ ...props }: ItemGridProps) {
             ? items.map((item) => (
                 <InventoryCard key={item!._id} item={item!} />
               ))
-            : loading.map((c) => <LoadingCard key={c} />)}
+            : loading.map((c) => <LoadingInventoryCard key={c} />)}
         </div>
       </div>
     </main>

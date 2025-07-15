@@ -6,7 +6,7 @@ import Image from "next/image";
 
 export const LoadingCard = () => {
   return (
-    <Card className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1">
+    <Card className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1 gap-0">
       <div className="relative -mt-1">
         <div className="cursor-pointer">
           <Skeleton className="w-full aspect-square object-cover border-b-2 border-border rounded-none"></Skeleton>

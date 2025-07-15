@@ -35,6 +35,20 @@ export function formatCurrency(
 }
 
 /**
+ * Formats a price value into a human-readable string using the "b m k" system.
+ * Examples: 1200 => "1.20k", 2500000 => "2.50m", 1000000000 => "1.00b"
+ * @param price - The price value to format.
+ * @param decimals - Number of decimal places (default: 2).
+ */
+export function formatPriceBNK(price: number, decimals: number = 2): string {
+  if (price >= 1_000_000_000)
+    return `${(price / 1_000_000_000).toFixed(decimals)}b`;
+  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(decimals)}m`;
+  if (price >= 1_000) return `${(price / 1_000).toFixed(decimals)}k`;
+  return price.toFixed(decimals);
+}
+
+/**
  * Parses a price string with optional suffixes (k, m, b) into a number.
  * Examples: "1.2k" => 1200, "2.5m" => 2500000, "1b" => 1000000000
  * @param value - The string to parse.

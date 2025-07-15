@@ -113,11 +113,11 @@ export default function Home() {
           <div className="mt-4">
             <Card className="min-w-[240px] p-4 rounded-none">
               <h3 className="text-lg font-semibold">Filters</h3>
-
+              <Separator />
               <div className="space-y-4">
                 {/* Listing Type Filter */}
                 <div>
-                  <h4 className="font-medium mb-2">Listing Type</h4>
+                  <h4 className="font-medium mb-2.5">Listing Type</h4>
                   <RadioGroup
                     defaultValue="all"
                     value={listingType}
@@ -143,7 +143,7 @@ export default function Home() {
 
                 {/* Categories */}
                 <div>
-                  <h4 className="font-medium mb-2">Categories</h4>
+                  <h4 className="font-medium mb-2.5">Categories</h4>
                   <RadioGroup
                     value={selectedCategory}
                     onValueChange={(value) =>

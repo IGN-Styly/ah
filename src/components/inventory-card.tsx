@@ -53,7 +53,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
     <>
       <Card
         ref={cardRef}
-        className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1"
+        className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1 gap-0"
       >
         <div className="relative -mt-1">
           <div
@@ -73,7 +73,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </div>
         </div>
-        <div className="p-3">
+        <div className="pb-3 pt-4">
           <h3 className="font-semibold text-sm leading-tight uppercase tracking-wider text-center line-clamp-2">
             {item.title}
           </h3>

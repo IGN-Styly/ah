@@ -25,7 +25,11 @@ export const getItems = query({
     }
     for (var id of user.inventory) {
       const item = await ctx.db.get(id as Id<"items">);
-      items.push(item);
+      if (
+        args.category &&
+        (item?.category == args.category || args.category == "all")
+      )
+        items.push(item);
     }
     return items;
   },

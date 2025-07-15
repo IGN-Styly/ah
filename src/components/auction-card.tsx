@@ -1,5 +1,5 @@
 "use client";
-import { formatPrice, formatCurrency } from "@/lib/price";
+import { formatPrice, formatCurrency, formatPriceBNK } from "@/lib/price";
 import { useState, useRef, useEffect, MouseEvent, useCallback } from "react";
 import Image from "next/image";
 import { Clock, Zap } from "lucide-react";
@@ -108,7 +108,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
     <>
       <Card
         ref={cardRef}
-        className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1"
+        className="w-full overflow-hidden rounded-none group transition-all duration-200 py-1 gap-0"
       >
         <div className="relative -mt-1">
           <div
@@ -148,7 +148,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               </span>
               <div className="font-semibold text-base text-primary">
                 {auction.currentBid !== undefined && !isNaN(auction.currentBid)
-                  ? formatCurrency(auction.currentBid, "USD", 0)
+                  ? formatPriceBNK(auction.currentBid)
                   : "N/A"}
               </div>
             </div>
@@ -159,7 +159,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               <div className="font-semibold text-base text-primary">
                 {auction.buyNowPrice !== undefined &&
                 auction.buyNowPrice !== null
-                  ? formatCurrency(auction.buyNowPrice, "USD", 0)
+                  ? formatPriceBNK(auction.buyNowPrice)
                   : "N/A"}
               </div>
             </div>

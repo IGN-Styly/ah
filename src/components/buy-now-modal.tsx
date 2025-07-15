@@ -48,15 +48,13 @@ export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm">Item Price</span>
-                <span className="font-semibold">
-                  {formatCurrency(itemPrice)}
-                </span>
+                <span className="font-semibold">{formatPrice(itemPrice)}</span>
               </div>
 
               <div className="flex justify-between">
                 <span className="text-sm">Processing Fee</span>
                 <span className="font-semibold">
-                  {formatCurrency(processingFee)}
+                  {formatPrice(processingFee)}
                 </span>
               </div>
 
@@ -67,7 +65,7 @@ export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
                   Total
                 </span>
                 <span className="font-bold text-lg text-primary">
-                  {formatCurrency(totalPrice)}
+                  {formatPrice(totalPrice)}
                 </span>
               </div>
             </div>
