@@ -4,6 +4,7 @@ import { Card } from "./ui/card";
 import { useEffect, useRef, useState } from "react";
 import { Doc } from "@convex/_generated/dataModel";
 import { NBTDisplay } from "./nbt";
+import { ItemImage } from "./ItemImage";
 
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -45,14 +46,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <Image
-              src={item.image || "/placeholder.svg?height=200&width=200"}
-              alt={item.title}
-              width={200}
-              height={200}
-              style={{ imageRendering: "pixelated" }}
-              className="w-full aspect-square object-cover border-b-2 border-border"
-            />
+            <ItemImage image={item.image} title={item.title} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </div>
         </div>

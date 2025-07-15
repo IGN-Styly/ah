@@ -13,6 +13,7 @@ import { NBTDisplay, parseNBT } from "./nbt";
 import { formatDistanceToNow, intervalToDuration, format } from "date-fns";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
+import { ItemImage } from "./ItemImage";
 
 export function AuctionCard({ auction }: AuctionCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -148,14 +149,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               setIsModalOpen(true);
             }}
           >
-            <Image
-              src={auction.image || "/placeholder.svg?height=200&width=200"}
-              alt={auction.title}
-              width={200}
-              height={200}
-              style={{ imageRendering: "pixelated" }}
-              className="w-full aspect-square object-cover border-b-2 border-border"
-            />
+            <ItemImage image={auction.image} title={auction.title} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </div>
 
@@ -327,14 +321,11 @@ export function AuctionCard({ auction }: AuctionCardProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:min-h-[600px]">
                 <div className="space-y-4">
-                  <Image
-                    src={
-                      auction.image || "/placeholder.svg?height=400&width=400"
-                    }
-                    alt={auction.title}
-                    width={400}
-                    height={400}
-                    className="w-full aspect-square object-cover border-2 border-border"
+                  <ItemImage
+                    title={auction.title}
+                    image={auction.image}
+                    size={400}
+                    border={true}
                   />
 
                   <h4 className="font-semibold text-lg uppercase tracking-wider">

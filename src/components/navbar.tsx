@@ -49,19 +49,21 @@ export default function Navbar() {
         }}
       >
         <div className="flex items-center justify-between h-full">
-          <div className="flex items-center space-x-3">
+          <Link href={"/"} className="flex items-center space-x-3">
             <Landmark className={isDark ? "text-white" : "text-gray-800"} />
             <span
               className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-800"}`}
             >
               Auction House
             </span>
-          </div>
+          </Link>
 
-          <div className="hidden lg:flex items-center space-x-8 text-sm">
-            <Link href="#">Auctions</Link>
+          <div className="hidden lg:flex items-center space-x-8 text-[14px]  text-center flex-1  justify-center-safe">
+            <Link href="#">About</Link>
+            <Link href="#">Pricing</Link>
             <Link href="#">Changelog</Link>
           </div>
+
           <div className="flex items-center space-x-4">
             {!user ? (
               <Link href="/signin">
