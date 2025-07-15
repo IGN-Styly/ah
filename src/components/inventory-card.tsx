@@ -6,63 +6,10 @@ import { Doc } from "@convex/_generated/dataModel";
 import { NBTDisplay } from "./nbt";
 import { ItemImage } from "./ItemImage";
 import { Button } from "./ui/button";
-
+import { formatPrice, formatCurrency, parsePrice } from "@/lib/price";
 import AppConfig from "@/lib/config";
 
-// Utility functions for price formatting and parsing
-const formatPrice = (price: number): string => {
-  if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(2)}b`;
-  if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(2)}m`;
-  if (price >= 1_000) return `${(price / 1_000).toFixed(2)}k`;
-  return price.toFixed(2);
-};
-
-const parsePrice = (value: string | null): number | null => {
-  if (!value) return null;
-
-  const numericPart = parseFloat(value);
-  if (isNaN(numericPart)) return null;
-
-  const unit = value.trim().slice(-1).toLowerCase();
-  switch (unit) {
-    case "k":
-      return numericPart * 1_000;
-    case "m":
-      return numericPart * 1_000_000;
-    case "b":
-      return numericPart * 1_000_000_000;
-    default:
-      return numericPart;
-  }
-};
-
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
-  const formatPrice = (price: number): string => {
-    if (price >= 1_000_000_000) return `${(price / 1_000_000_000).toFixed(2)}b`;
-    if (price >= 1_000_000) return `${(price / 1_000_000).toFixed(2)}m`;
-    if (price >= 1_000) return `${(price / 1_000).toFixed(2)}k`;
-    return price.toFixed(2);
-  };
-
-  const parsePrice = (value: string | null): number | null => {
-    if (!value) return null;
-
-    const numericPart = parseFloat(value);
-    if (isNaN(numericPart)) return null;
-
-    const unit = value.trim().slice(-1).toLowerCase();
-    switch (unit) {
-      case "k":
-        return numericPart * 1_000;
-      case "m":
-        return numericPart * 1_000_000;
-      case "b":
-        return numericPart * 1_000_000_000;
-      default:
-        return numericPart;
-    }
-  };
-
   const [modalState, setModalState] = useState({
     isSellModalOpen: false,
     isReceiptModalOpen: false,
@@ -75,6 +22,8 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
   });
 
   const [prices, setPrices] = useState({
+    binPriceRaw: "",
+    bidPriceRaw: "",
     binPrice: null as number | null,
     bidPrice: null as number | null,
   });
@@ -245,11 +194,11 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 <input
                   type="text"
                   className="w-full border border-border p-2 rounded-none"
-                  value={prices.binPrice !== null ? prices.binPrice : ""}
+                  value={prices.binPriceRaw}
                   onChange={(e) =>
                     setPrices((prev) => ({
                       ...prev,
-                      binPrice: parsePrice(e.target.value),
+                      binPriceRaw: e.target.value,
                     }))
                   }
                 />
@@ -261,11 +210,11 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 <input
                   type="text"
                   className="w-full border border-border p-2 rounded-none"
-                  value={prices.bidPrice !== null ? prices.bidPrice : ""}
+                  value={prices.bidPriceRaw}
                   onChange={(e) =>
                     setPrices((prev) => ({
                       ...prev,
-                      bidPrice: parsePrice(e.target.value),
+                      bidPriceRaw: e.target.value,
                     }))
                   }
                 />
@@ -273,7 +222,14 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
               <Button
                 className="w-full rounded-none text-sm font-mono font-black"
                 onClick={() => {
-                  if (prices.binPrice !== null || prices.bidPrice !== null) {
+                  const parsedBinPrice = parsePrice(prices.binPriceRaw);
+                  const parsedBidPrice = parsePrice(prices.bidPriceRaw);
+                  setPrices((prev) => ({
+                    ...prev,
+                    binPrice: parsedBinPrice,
+                    bidPrice: parsedBidPrice,
+                  }));
+                  if (parsedBinPrice !== null || parsedBidPrice !== null) {
                     setModalState({
                       isSellModalOpen: false,
                       isReceiptModalOpen: true,
@@ -282,8 +238,10 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                   }
                 }}
                 disabled={
-                  (prices.binPrice === null || prices.binPrice === 0) &&
-                  (prices.bidPrice === null || prices.bidPrice === 0)
+                  (parsePrice(prices.binPriceRaw) === null ||
+                    parsePrice(prices.binPriceRaw) === 0) &&
+                  (parsePrice(prices.bidPriceRaw) === null ||
+                    parsePrice(prices.bidPriceRaw) === 0)
                 }
               >
                 CONFIRM PRICES
@@ -312,7 +270,9 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 <span>
                   {prices.binPrice !== null
                     ? `$${formatPrice(prices.binPrice)}`
-                    : "N/A"}
+                    : prices.binPriceRaw
+                      ? prices.binPriceRaw
+                      : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -320,7 +280,9 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 <span>
                   {prices.bidPrice !== null
                     ? `$${formatPrice(prices.bidPrice)}`
-                    : "N/A"}
+                    : prices.bidPriceRaw
+                      ? prices.bidPriceRaw
+                      : "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -344,158 +306,6 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 onClick={() => {
                   console.log("Item listed for sale!");
                   setModalState({ ...modalState, isReceiptModalOpen: false });
-                }}
-              >
-                CONFIRM SALE
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Sell Modal */}
-      {isSellModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setIsSellModalOpen(false)}
-        >
-          <div
-            className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-lg w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="font-bold text-foreground uppercase tracking-wider text-lg mb-4">
-              Set Prices for Selling
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Buy It Now (BIN) Price
-                </label>
-                <input
-                  type="text"
-                  className="w-full border border-border p-2 rounded-none"
-                  value={binPrice !== null && binPrice !== 0 ? binPrice : ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "0" || value.toLowerCase() === "n/a") {
-                      setBinPrice(null);
-                    } else {
-                      setBinPrice(value);
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Starting Bid Price
-                </label>
-                <input
-                  type="text"
-                  className="w-full border border-border p-2 rounded-none"
-                  value={bidPrice !== null && bidPrice !== 0 ? bidPrice : ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "0" || value.toLowerCase() === "n/a") {
-                      setBidPrice(null);
-                    } else {
-                      setBidPrice(value);
-                    }
-                  }}
-                />
-              </div>
-              <Button
-                className="w-full rounded-none text-sm font-mono font-black"
-                onClick={() => {
-                  const parsePrice = (value: string | null) => {
-                    if (!value) return null;
-
-                    // Attempt to parse the numeric part first
-                    const numericPart = parseFloat(value);
-                    if (isNaN(numericPart)) return null;
-
-                    // Check for shorthand unit (k, m, b) and apply multiplier
-                    const unit = String(value).trim().slice(-1).toLowerCase();
-                    switch (unit) {
-                      case "k":
-                        return numericPart * 1000;
-                      case "m":
-                        return numericPart * 1000000;
-                      case "b":
-                        return numericPart * 1000000000;
-                      default:
-                        return numericPart;
-                    }
-                  };
-
-                  const parsedBinPrice = parsePrice(binPrice);
-                  const parsedBidPrice = parsePrice(bidPrice);
-
-                  setBinPrice(parsedBinPrice === 0 ? 0 : parsedBinPrice);
-                  setBidPrice(parsedBidPrice === 0 ? 0 : parsedBidPrice);
-
-                  if (parsedBinPrice !== null || parsedBidPrice !== null) {
-                    setIsSellModalOpen(false);
-                    setIsReceiptModalOpen(true);
-                  }
-                }}
-                disabled={
-                  (binPrice === null || binPrice === 0) &&
-                  (bidPrice === null || bidPrice === 0)
-                }
-              >
-                CONFIRM PRICES
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Receipt Modal */}
-      {isReceiptModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setIsReceiptModalOpen(false)}
-        >
-          <div
-            className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-lg w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="font-bold text-foreground uppercase tracking-wider text-lg mb-4">
-              Confirm Sale Details
-            </h3>
-            <div className="space-y-4 text-sm font-mono">
-              <div className="flex justify-between">
-                <span>Buy It Now (BIN) Price:</span>
-                <span>
-                  {binPrice !== null ? `$${formatPrice(binPrice)}` : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Starting Bid Price:</span>
-                <span>
-                  {bidPrice !== null ? `$${formatPrice(bidPrice)}` : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax ({AppConfig.TAX * 100}):</span>
-                <span>
-                  {binPrice || bidPrice
-                    ? `$${formatPrice(((binPrice || 0) + (bidPrice || 0)) * 0.1)}`
-                    : "N/A"}
-                </span>
-              </div>
-              <div className="flex justify-between font-bold">
-                <span>Total:</span>
-                <span>
-                  {binPrice || bidPrice
-                    ? `$${formatPrice((binPrice || bidPrice || 0) - (binPrice || bidPrice || 0) * 0.1)}`
-                    : "N/A"}
-                </span>
-              </div>
-              <Button
-                className="w-full rounded-none text-sm font-mono font-black mt-4"
-                onClick={() => {
-                  console.log("Item listed for sale!");
-                  setIsReceiptModalOpen(false);
                 }}
               >
                 CONFIRM SALE

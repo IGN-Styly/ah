@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Doc } from "@convex/_generated/dataModel";
+import { formatCurrency } from "@/lib/price";
 
 interface BidModalProps {
   isOpen: boolean;
@@ -18,68 +19,33 @@ interface BidModalProps {
   auction: Doc<"auctions">;
 }
 
+function getQuickBidIncrements(currentBid: number): number[] {
+  if (currentBid < 100) return [5, 10, 25, 50];
+  if (currentBid < 500) return [10, 25, 50, 100];
+  if (currentBid < 1000) return [25, 50, 100, 250];
+  if (currentBid < 5000) return [100, 250, 500, 1000];
+  if (currentBid < 10000) return [250, 500, 1000, 2500];
+  if (currentBid < 50000) return [500, 1000, 2500, 5000];
+  if (currentBid < 100000) return [1000, 2500, 5000, 10000];
+  if (currentBid < 500000) return [5000, 10000, 25000, 50000];
+  if (currentBid < 1000000) return [10000, 25000, 50000, 100000];
+  if (currentBid < 5000000) return [50000, 100000, 250000, 500000];
+  if (currentBid < 10000000) return [100000, 250000, 500000, 1000000];
+  return [500000, 1000000, 2500000, 5000000];
+}
+
+function formatIncrement(increment: number): string {
+  if (increment >= 1000000) return `+$${(increment / 1000000).toFixed(1)}m`;
+  if (increment >= 1000) return `+$${(increment / 1000).toFixed(0)}k`;
+  return `+$${increment}`;
+}
+
 export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
   const [bidAmount, setBidAmount] = useState("");
 
   const minBid = (auction.currentBid as number) + 1;
-
-  const getQuickBidIncrements = (currentBid: number) => {
-    if (currentBid < 100) {
-      return [5, 10, 25, 50];
-    } else if (currentBid < 500) {
-      return [10, 25, 50, 100];
-    } else if (currentBid < 1000) {
-      return [25, 50, 100, 250];
-    } else if (currentBid < 5000) {
-      return [100, 250, 500, 1000];
-    } else if (currentBid < 10000) {
-      return [250, 500, 1000, 2500];
-    } else if (currentBid < 50000) {
-      return [500, 1000, 2500, 5000];
-    } else if (currentBid < 100000) {
-      return [1000, 2500, 5000, 10000];
-    } else if (currentBid < 500000) {
-      return [5000, 10000, 25000, 50000];
-    } else if (currentBid < 1000000) {
-      return [10000, 25000, 50000, 100000];
-    } else if (currentBid < 5000000) {
-      return [50000, 100000, 250000, 500000];
-    } else if (currentBid < 10000000) {
-      return [100000, 250000, 500000, 1000000];
-    } else {
-      return [500000, 1000000, 2500000, 5000000];
-    }
-  };
-
   const increments = getQuickBidIncrements(auction.currentBid as number);
   const quickBidAmounts = increments.map((increment) => minBid + increment);
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000000) {
-      return `$${(amount / 1000000000).toFixed(1)}b`;
-    }
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}m`;
-    }
-    if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(1)}k`;
-    }
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatIncrement = (increment: number) => {
-    if (increment >= 1000000) {
-      return `+$${(increment / 1000000).toFixed(1)}m`;
-    }
-    if (increment >= 1000) {
-      return `+$${(increment / 1000).toFixed(0)}k`;
-    }
-    return `+$${increment}`;
-  };
 
   const handleQuickBid = (amount: number) => {
     setBidAmount(amount.toString());

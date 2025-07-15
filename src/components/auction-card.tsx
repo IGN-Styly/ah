@@ -1,5 +1,5 @@
 "use client";
-
+import { formatPrice, formatCurrency } from "@/lib/price";
 import { useState, useRef, useEffect, MouseEvent, useCallback } from "react";
 import Image from "next/image";
 import { Clock, Zap } from "lucide-react";
@@ -104,35 +104,6 @@ export function AuctionCard({ auction }: AuctionCardProps) {
     }
   }, [isHovered]);
 
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000000) {
-      return `$${(amount / 1000000000).toFixed(1)}b`;
-    }
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}m`;
-    }
-    if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(1)}k`;
-    }
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-  const formatNum = (amount: number) => {
-    if (amount >= 1000000000) {
-      return `${(amount / 1000000000).toFixed(1)}b`;
-    }
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}m`;
-    }
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(1)}k`;
-    }
-    return amount;
-  };
-
   return (
     <>
       <Card
@@ -177,7 +148,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               </span>
               <div className="font-semibold text-base text-primary">
                 {auction.currentBid !== undefined && !isNaN(auction.currentBid)
-                  ? formatCurrency(auction.currentBid)
+                  ? formatCurrency(auction.currentBid, "USD", 0)
                   : "N/A"}
               </div>
             </div>
@@ -188,7 +159,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               <div className="font-semibold text-base text-primary">
                 {auction.buyNowPrice !== undefined &&
                 auction.buyNowPrice !== null
-                  ? formatCurrency(auction.buyNowPrice)
+                  ? formatCurrency(auction.buyNowPrice, "USD", 0)
                   : "N/A"}
               </div>
             </div>
@@ -207,7 +178,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               </span>
             </div>
             <span className="font-semibold uppercase tracking-wider">
-              {formatNum(auction.bidcount)} BIDS
+              {formatPrice(auction.bidcount, 0)} BIDS
             </span>
           </div>
 
@@ -339,7 +310,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                       </span>
                       <div className="font-semibold text-lg text-primary">
                         {auction.currentBid
-                          ? formatCurrency(auction.currentBid)
+                          ? formatCurrency(auction.currentBid, "USD", 0)
                           : "N/A"}
                       </div>
                     </div>
@@ -349,7 +320,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                       </span>
                       <div className="font-semibold text-lg text-primary">
                         {auction.buyNowPrice
-                          ? formatCurrency(auction.buyNowPrice)
+                          ? formatCurrency(auction.buyNowPrice, "USD", 0)
                           : "N/A"}
                       </div>
                     </div>
@@ -376,7 +347,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                         </span>
                       </div>
                       <span className="font-semibold uppercase tracking-wider">
-                        {formatNum(auction.bidcount)} BIDS
+                        {formatPrice(auction.bidcount, 0)} BIDS
                       </span>
                     </div>
                   </div>

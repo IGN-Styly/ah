@@ -11,39 +11,16 @@ import { Separator } from "@/components/ui/separator";
 import { NBTDisplay } from "./nbt";
 import { Doc } from "@convex/_generated/dataModel";
 import AppConfig from "@/lib/config";
-
+import { formatPrice, formatCurrency } from "@/lib/price";
 interface BuyNowModalProps {
   isOpen: boolean;
   onClose: () => void;
   auction: Doc<"auctions">;
 }
-const formatCurrency2 = (amount: number) => {
-  if (amount >= 1000000000) {
-    return `$${(amount / 1000000000).toFixed(1)}b`;
-  }
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}m`;
-  }
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(1)}k`;
-  }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
-export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
+export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
   const itemPrice = auction.buyNowPrice || 0;
-  const processingFee = Math.round(itemPrice * AppConfig.TAX); // 2.9% processing fee
+  const processingFee = Math.round(itemPrice * AppConfig.TAX); // 2.5% processing fee
   const totalPrice = itemPrice + processingFee;
 
   return (
@@ -62,11 +39,6 @@ export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
             </h4>
             <p className="font-semibold text-base">{auction.title}</p>
           </div>
-          {/* <div className="bg-muted p-4 border rounded-none">
-            <h1 className="text-7xl font-black font-serif text-center">
-              {formatCurrency2(totalPrice)}
-            </h1>
-          </div> */}
           {/* Price Breakdown */}
           <div className="bg-muted p-4 border rounded-none">
             <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground mb-3">
