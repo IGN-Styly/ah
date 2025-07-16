@@ -11,11 +11,14 @@ import { BuyNowModal } from "@/components/buy-now-modal";
 import type { AuctionCardProps } from "@/types/auction";
 import { NBTDisplay, parseNBT } from "./nbt";
 import { formatDistanceToNow, intervalToDuration, format } from "date-fns";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { ItemImage } from "./ItemImage";
+import { toast } from "sonner";
 
 export function AuctionCard({ auction }: AuctionCardProps) {
+  const cancel = useMutation(api.auction.cancelAuction);
+  const user = useQuery(api.auth.getCurrentUser);
   const [isHovered, setIsHovered] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
@@ -183,42 +186,45 @@ export function AuctionCard({ auction }: AuctionCardProps) {
           </div>
 
           <div className="flex gap-2">
-            {(auction.buyNowPrice === auction.currentBid) == false ? (
-              <></>
-            ) : (
+            {auction.seller === user?._id ? (
               <Button
                 size="sm"
-                className="w-full rounded-none text-sm font-mono font-black"
-                disabled
+                className="w-full rounded-none text-sm font-mono font-black bg-red-500 text-white"
+                onClick={async () => {
+                  let { message, ok } = await cancel({ id: auction._id });
+                  ok
+                    ? toast.success("Item Auctioned", {
+                        description: message,
+                      })
+                    : toast.error("Error", {
+                        description: message,
+                      });
+                }}
               >
-                N/A
+                CANCEL
               </Button>
-            )}
-            {(auction.buyNowPrice === undefined ||
-              auction.buyNowPrice === null) &&
-              auction.currentBid !== undefined &&
-              !isNaN(auction.currentBid) && (
-                <Button
-                  size="sm"
-                  className="w-full rounded-none text-sm font-mono font-black"
-                  onClick={() => setShowBidModal(true)}
-                >
-                  BID
-                </Button>
-              )}
-            {auction.buyNowPrice !== undefined &&
-              auction.buyNowPrice !== null && (
-                <>
-                  {auction.currentBid !== undefined &&
-                    !isNaN(auction.currentBid) && (
-                      <Button
-                        size="sm"
-                        className="flex-1 rounded-none text-sm font-mono font-black"
-                        onClick={() => setShowBidModal(true)}
-                      >
-                        BID
-                      </Button>
-                    )}
+            ) : (
+              <>
+                {auction.currentBid !== auction.buyNowPrice && (
+                  <Button
+                    size="sm"
+                    className="w-full rounded-none text-sm font-mono font-black"
+                    disabled
+                  >
+                    N/A
+                  </Button>
+                )}
+                {auction.currentBid !== undefined &&
+                  !isNaN(auction.currentBid) && (
+                    <Button
+                      size="sm"
+                      className="flex-1 rounded-none text-sm font-mono font-black"
+                      onClick={() => setShowBidModal(true)}
+                    >
+                      BID
+                    </Button>
+                  )}
+                {auction.buyNowPrice && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -227,8 +233,9 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                   >
                     BUY
                   </Button>
-                </>
-              )}
+                )}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

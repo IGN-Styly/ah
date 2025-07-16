@@ -1,5 +1,7 @@
 import { query, mutation } from "@convex/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { Doc } from "./_generated/dataModel";
 
 // Sort types
 export const SortOptions = {
@@ -209,4 +211,39 @@ export const create = mutation({
   handler: async (ctx, args) => {
     return ctx.db.insert("auctions", args.item);
   },
+});
+
+export const cancelAuction = mutation({
+  args: { id: v.id("auctions") },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+
+    const now = Date.now();
+    if (auction.end <= now) {
+      return { ok: false, message: "Auction has already ended" };
+    }
+    await ctx.db.delete(auction._id);
+    const itemId = await ctx.db.insert("items", {
+      category: auction.category,
+      image: auction.image,
+      lore: auction.lore,
+      title: auction.title,
+    });
+    user.inventory.push(itemId);
+    ctx.db.patch(user._id, { inventory: user.inventory });
+    return {
+      ok: true,
+      message: "Canceled auction and transfered item to your inventory",
+    };
+  },
+  returns: { ok: v.boolean(), message: v.string() },
 });
