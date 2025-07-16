@@ -12,6 +12,9 @@ import { NBTDisplay } from "./nbt";
 import { Doc } from "@convex/_generated/dataModel";
 import AppConfig from "@/lib/config";
 import { formatPrice, formatCurrency } from "@/lib/price";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { toast } from "sonner";
 interface BuyNowModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,6 +22,7 @@ interface BuyNowModalProps {
 }
 
 export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
+  const buyNow = useMutation(api.auction.buyItNow);
   const itemPrice = auction.buyNowPrice || 0;
   const processingFee = Math.round(itemPrice * AppConfig.TAX); // 2.5% processing fee
   const totalPrice = itemPrice + processingFee;
@@ -88,7 +92,17 @@ export function BuyNowModal({ isOpen, onClose, auction }: BuyNowModalProps) {
               Cancel
             </Button>
             <Button
-              onClick={onClose}
+              onClick={async () => {
+                onClose;
+                const { ok, message } = await buyNow({ id: auction._id });
+                ok
+                  ? toast.success("Item Bought", {
+                      description: message,
+                    })
+                  : toast.error("Error", {
+                      description: message,
+                    });
+              }}
               className="flex-1 rounded-none font-black font-mono"
             >
               Buy Now

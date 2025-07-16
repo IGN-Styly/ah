@@ -54,7 +54,6 @@ export const {
   onCreateUser: async (ctx, user) => {
     return ctx.db.insert("users", {
       name: user.name,
-      auctions: [],
       inventory: [],
       balance: 0,
     });

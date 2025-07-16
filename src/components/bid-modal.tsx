@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Doc } from "@convex/_generated/dataModel";
-import { formatCurrency } from "@/lib/price";
+import { formatCurrency, parsePrice } from "@/lib/price";
+import { useMutation } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { toast } from "sonner";
 
 interface BidModalProps {
   isOpen: boolean;
@@ -42,6 +45,7 @@ function formatIncrement(increment: number): string {
 
 export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
   const [bidAmount, setBidAmount] = useState("");
+  const placebid = useMutation(api.auction.bid);
 
   const minBid = (auction.currentBid as number) + 1;
   const increments = getQuickBidIncrements(auction.currentBid as number);
@@ -81,7 +85,7 @@ export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
             </Label>
             <Input
               id="bid-amount"
-              type="number"
+              type=""
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
               placeholder={formatCurrency(minBid)}
@@ -118,7 +122,30 @@ export function BidModal({ isOpen, onClose, auction }: BidModalProps) {
             >
               Cancel
             </Button>
-            <Button onClick={onClose} className="flex-1 rounded-none">
+            <Button
+              disabled={
+                !bidAmount ||
+                //@ts-expect-error
+                isNaN(parsePrice(bidAmount)) ||
+                //@ts-expect-error
+                parsePrice(bidAmount) < minBid
+              }
+              onClick={async () => {
+                onClose;
+                const { ok, message } = await placebid({
+                  amt: parsePrice(bidAmount) as number,
+                  id: auction._id,
+                });
+                ok
+                  ? toast.success("Bid Sent", {
+                      description: message,
+                    })
+                  : toast.error("Error", {
+                      description: message,
+                    });
+              }}
+              className="flex-1 rounded-none"
+            >
               Place Bid
             </Button>
           </div>

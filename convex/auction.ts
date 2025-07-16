@@ -424,7 +424,12 @@ export const cancelAuction = mutation({
     }
 
     const now = Date.now();
-    if (auction.end <= now) {
+    if (
+      auction.end <= now ||
+      (auction.buyNowPrice &&
+        auction.currentBid &&
+        auction.currentBid >= auction.buyNowPrice)
+    ) {
       return { ok: false, message: "Auction has already ended" };
     }
     await ctx.db.delete(auction._id);
@@ -475,5 +480,108 @@ export const claimSellerAuction = mutation({
       ctx.db.patch(auction._id, { seller_claim: true });
     }
     return { ok: true, message: "Succesfully claimed" };
+  },
+});
+export const buyItNow = mutation({
+  args: { id: v.id("auctions") },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+    if (!auction.buyNowPrice) {
+      return { ok: false, message: "Not a BIN Auction" };
+    }
+    const now = Date.now();
+    if (
+      auction.end <= now ||
+      (auction.buyNowPrice &&
+        auction.currentBid &&
+        auction.currentBid >= auction.buyNowPrice)
+    ) {
+      return { ok: false, message: "Auction has already ended" };
+    }
+    if (user.balance < auction.buyNowPrice) {
+      return { ok: false, message: "Insufucient funds" };
+    }
+    const bid = await ctx.db.insert("bids", {
+      auctionId: auction._id,
+      bid: auction.buyNowPrice,
+      userId: user._id,
+    });
+    ctx.db.patch(auction._id, {
+      bidid: bid,
+      currentBid: auction.buyNowPrice,
+      bidcount: auction.bidcount + 1,
+    });
+    ctx.db.patch(user._id, { balance: user.balance - auction.buyNowPrice });
+    return { ok: true, message: "This Auction has been Succesfully Bought" };
+  },
+});
+export const bid = mutation({
+  args: { id: v.id("auctions"), amt: v.number() },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+    if (!auction.currentBid) {
+      return { ok: false, message: "Not a Bid Auction" };
+    }
+    const now = Date.now();
+    if (
+      auction.end <= now ||
+      (auction.buyNowPrice &&
+        auction.currentBid &&
+        auction.currentBid >= auction.buyNowPrice)
+    ) {
+      return { ok: false, message: "Auction has already ended" };
+    }
+    if (args.amt < auction.currentBid) {
+      return { ok: false, message: "Invalid bid" };
+    }
+    if (user.balance < args.amt) {
+      return { ok: false, message: "Insufucient funds" };
+    }
+    let tbid = await ctx.db
+      .query("bids")
+      .withIndex("by_userId", (q) => {
+        return q.eq("userId", user._id);
+      })
+      .filter((q) => {
+        return q.eq(q.field("auctionId"), auction._id);
+      })
+      .first();
+    let bid;
+    if (!tbid) {
+      bid = await ctx.db.insert("bids", {
+        auctionId: auction._id,
+        bid: args.amt,
+        userId: user._id,
+      });
+    } else {
+      ctx.db.patch(tbid._id, { bid: args.amt });
+      bid = tbid?._id;
+    }
+
+    ctx.db.patch(auction._id, {
+      bidid: bid,
+      currentBid: args.amt,
+      bidcount: auction.bidcount + 1,
+    });
+    ctx.db.patch(user._id, { balance: user.balance - args.amt });
+    return { ok: true, message: "You have Succesfully bid on this Auction" };
   },
 });

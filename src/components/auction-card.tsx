@@ -30,6 +30,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<HTMLDivElement>(null);
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
+  let bid = useQuery(api.bids.getbid, { id: auction._id });
 
   // Treat as ended if currentBid >= buyNowPrice and buyNowPrice is set
   const isBuyNowEnded =
@@ -231,14 +232,36 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               )
             ) : (
               <>
-                {isBuyNowEnded ? (
-                  <Button
-                    size="sm"
-                    className="w-full rounded-none text-sm font-mono font-black"
-                    disabled
-                  >
-                    N/A
-                  </Button>
+                {isEnded ? (
+                  bid?._id ? (
+                    <>
+                      {bid._id == auction.bidid ? (
+                        <>
+                          <Button
+                            size="sm"
+                            className="w-full rounded-none text-sm font-mono font-black"
+                          >
+                            Claim Item
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="w-full rounded-none text-sm font-mono font-black"
+                        >
+                          Claim Bid
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full rounded-none text-sm font-mono font-black"
+                      disabled
+                    >
+                      N/A
+                    </Button>
+                  )
                 ) : (
                   <>
                     {auction.currentBid !== undefined &&
