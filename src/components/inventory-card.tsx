@@ -8,7 +8,11 @@ import { ItemImage } from "./ItemImage";
 import { Button } from "./ui/button";
 import { formatPrice, formatCurrency, parsePrice } from "@/lib/price";
 import AppConfig from "@/lib/config";
-
+import { Label } from "./ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { ChevronDownIcon } from "lucide-react";
+import { Input } from "./ui/input";
+import { Calendar } from "./ui/calendar";
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
   const [modalState, setModalState] = useState({
     isSellModalOpen: false,
@@ -26,9 +30,17 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
     bidPriceRaw: "",
     binPrice: null as number | null,
     bidPrice: null as number | null,
+    endDateRaw: "",
+    endTimeRaw: "",
+    endDateTime: null as Date | null,
   });
+
+  // Track auction start time for minimum duration
+  const [startTime, setStartTime] = useState<Date | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     if (hoverState.isHovered && cardRef.current && hoverRef.current) {
@@ -146,13 +158,14 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                   <div className="flex gap-2 mt-4">
                     <Button
                       className="w-full rounded-none text-sm font-mono font-black"
-                      onClick={() =>
+                      onClick={() => {
+                        setStartTime(new Date());
                         setModalState({
                           isSellModalOpen: true,
                           isReceiptModalOpen: false,
                           isItemModalOpen: false,
-                        })
-                      }
+                        });
+                      }}
                     >
                       SELL ITEM
                     </Button>
@@ -184,7 +197,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-bold text-foreground uppercase tracking-wider text-lg mb-4">
-              Set Prices for Selling
+              Sell Item
             </h3>
             <div className="space-y-4">
               <div>
@@ -219,17 +232,81 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                   }
                 />
               </div>
+
+              {/* End Date and Time Selectors */}
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  Auction End Date
+                </label>
+                <input
+                  type="date"
+                  className="w-full border border-border p-2 rounded-none"
+                  value={prices.endDateRaw}
+                  min={(() => {
+                    const minDate = startTime
+                      ? new Date(startTime.getTime() + 6 * 60 * 60 * 1000)
+                      : new Date(Date.now() + 6 * 60 * 60 * 1000);
+                    return minDate.toISOString().slice(0, 10);
+                  })()}
+                  onChange={(e) =>
+                    setPrices((prev) => ({
+                      ...prev,
+                      endDateRaw: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
+                  Auction End Time{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (24-hour format, e.g. 17:30)
+                  </span>
+                </label>
+                <input
+                  type="time"
+                  className="w-full border border-border p-2 rounded-none"
+                  value={prices.endTimeRaw}
+                  onChange={(e) =>
+                    setPrices((prev) => ({
+                      ...prev,
+                      endTimeRaw: e.target.value,
+                    }))
+                  }
+                />
+              </div>
               <Button
                 className="w-full rounded-none text-sm font-mono font-black"
                 onClick={() => {
                   const parsedBinPrice = parsePrice(prices.binPriceRaw);
                   const parsedBidPrice = parsePrice(prices.bidPriceRaw);
+
+                  // Combine date and time into a Date object
+                  let parsedEndDateTime: Date | null = null;
+                  if (prices.endDateRaw && prices.endTimeRaw) {
+                    parsedEndDateTime = new Date(
+                      prices.endDateRaw + "T" + prices.endTimeRaw,
+                    );
+                  }
+
                   setPrices((prev) => ({
                     ...prev,
                     binPrice: parsedBinPrice,
                     bidPrice: parsedBidPrice,
+                    endDateTime: parsedEndDateTime,
                   }));
-                  if (parsedBinPrice !== null || parsedBidPrice !== null) {
+
+                  // Minimum end time is 6 hours from start
+                  const minEnd =
+                    startTime !== null
+                      ? new Date(startTime.getTime() + 6 * 60 * 60 * 1000)
+                      : new Date(Date.now() + 6 * 60 * 60 * 1000);
+
+                  if (
+                    (parsedBinPrice !== null || parsedBidPrice !== null) &&
+                    parsedEndDateTime !== null &&
+                    parsedEndDateTime >= minEnd
+                  ) {
                     setModalState({
                       isSellModalOpen: false,
                       isReceiptModalOpen: true,
@@ -238,10 +315,24 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                   }
                 }}
                 disabled={
-                  (parsePrice(prices.binPriceRaw) === null ||
+                  ((parsePrice(prices.binPriceRaw) === null ||
                     parsePrice(prices.binPriceRaw) === 0) &&
-                  (parsePrice(prices.bidPriceRaw) === null ||
-                    parsePrice(prices.bidPriceRaw) === 0)
+                    (parsePrice(prices.bidPriceRaw) === null ||
+                      parsePrice(prices.bidPriceRaw) === 0)) ||
+                  !prices.endDateRaw ||
+                  !prices.endTimeRaw ||
+                  (prices.endDateRaw &&
+                    prices.endTimeRaw &&
+                    (() => {
+                      const dt = new Date(
+                        prices.endDateRaw + "T" + prices.endTimeRaw,
+                      );
+                      const minEnd =
+                        startTime !== null
+                          ? new Date(startTime.getTime() + 6 * 60 * 60 * 1000)
+                          : new Date(Date.now() + 6 * 60 * 60 * 1000);
+                      return dt < minEnd;
+                    })())
                 }
               >
                 CONFIRM PRICES
@@ -300,6 +391,16 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                     ((prices.binPrice || 0) + (prices.bidPrice || 0)) *
                       AppConfig.TAX,
                 )}`}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Auction End:</span>
+                <span>
+                  {prices.endDateTime
+                    ? prices.endDateTime.toLocaleString()
+                    : prices.endDateRaw && prices.endTimeRaw
+                      ? `${prices.endDateRaw} ${prices.endTimeRaw}`
+                      : "N/A"}
+                </span>
               </div>
               <Button
                 className="w-full rounded-none text-sm font-mono font-black mt-4"
