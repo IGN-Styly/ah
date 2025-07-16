@@ -101,7 +101,13 @@ export default function Navbar() {
                   >
                     Inventory
                   </DropdownMenuItem>
-                  <DropdownMenuItem>My auctions</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      redirect("/myauctions");
+                    }}
+                  >
+                    My auctions
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={async () => {
                       await authClient.signOut();

@@ -1,7 +1,7 @@
 import { query, mutation } from "@convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
-import { Doc } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 
 // Sort types
 export const SortOptions = {
@@ -19,8 +19,207 @@ export const get = query({
     sort: v.optional(v.string()),
     listingType: v.optional(v.string()), // NEW
     search: v.optional(v.string()), // Add search argument
+    own: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
+    let auctions: Doc<"auctions">[] = [];
+
+    if (args.own) {
+      // Fetch auctions where the user is the seller
+      const sellingAuctions = await ctx.db
+        .query("auctions")
+        .withIndex("by_seller", (q) => q.eq("seller", args.own as Id<"users">))
+        .collect();
+
+      // Fetch auctions where the user has placed a bid
+      const userBids = await ctx.db
+        .query("bids")
+        .withIndex("by_userId", (q) => q.eq("userId", args.own as Id<"users">))
+        .collect();
+
+      const bidAuctionIds = userBids.map((bid) => bid.auctionId);
+
+      // Fetch auctions for these bidAuctionIds
+      let bidAuctions: Doc<"auctions">[] = [];
+      if (bidAuctionIds.length > 0) {
+        bidAuctions = await Promise.all(
+          bidAuctionIds.map((id) => ctx.db.get(id)),
+        ).then((results) => results.filter(Boolean) as Doc<"auctions">[]);
+      }
+
+      // Combine and deduplicate auctions
+      const auctionMap = new Map<string, Doc<"auctions">>();
+      for (const auction of sellingAuctions) {
+        auctionMap.set(auction._id, auction);
+      }
+      for (const auction of bidAuctions) {
+        auctionMap.set(auction._id, auction);
+      }
+      auctions = Array.from(auctionMap.values());
+
+      // Now apply all filters and sorting in TypeScript for the 'own' case
+
+      // Filter by category if provided and not "all"
+      if (args.category && args.category !== "all") {
+        auctions = auctions.filter((a) => a.category === args.category);
+      }
+
+      // Filter by listing type
+      if (args.listingType === "bin") {
+        auctions = auctions.filter(
+          (a) =>
+            typeof a.buyNowPrice === "number" &&
+            a.buyNowPrice !== null &&
+            a.buyNowPrice !== undefined,
+        );
+      } else if (args.listingType === "bid") {
+        auctions = auctions.filter(
+          (a) => a.buyNowPrice === null || a.buyNowPrice === undefined,
+        );
+      }
+
+      // Filter out ended auctions if includeEnded is false
+      const now = Date.now();
+      if (args.includeEnded === false) {
+        auctions = auctions.filter((a) => a.end > now);
+      }
+
+      // Search filter (case-insensitive, supports enchant:"..." key:value search, comma-separated phrase match, then AND word search)
+      if (args.search && args.search.trim() !== "") {
+        let searchTerm = args.search.trim().toLowerCase();
+
+        // Parse all enchant:"..." key:value searches
+        const enchantRegex = /enchant:"([^"]+)"/g;
+        let enchantPhrases: string[] = [];
+        let match;
+        while ((match = enchantRegex.exec(searchTerm)) !== null) {
+          enchantPhrases.push(match[1].trim());
+        }
+        // Remove all enchant:"..." from the search term for further processing
+        if (enchantPhrases.length > 0) {
+          searchTerm = searchTerm
+            .replace(/enchant:"([^"]+)"/g, "")
+            .replace(/\s{2,}/g, " ")
+            .trim();
+        }
+
+        // Split by comma for phrase search, trim each phrase
+        const phrases = searchTerm
+          .split(",")
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0);
+
+        let filtered: typeof auctions = auctions;
+
+        // If enchant:"..." is present, filter by all phrases in lore (AND logic)
+        if (enchantPhrases.length > 0) {
+          filtered = filtered.filter((a) => {
+            const lore = a.lore.toLowerCase();
+            return enchantPhrases.every((phrase) =>
+              lore.includes(phrase.toLowerCase()),
+            );
+          });
+        }
+
+        // If there are still search terms left, apply phrase/word search
+        if (phrases.length > 0 && phrases.some((p) => p.length > 0)) {
+          if (phrases.length > 1) {
+            // All phrases must be present as substrings in title or lore
+            filtered = filtered.filter((a) => {
+              const title = a.title.toLowerCase();
+              const lore = a.lore.toLowerCase();
+              return phrases.every(
+                (phrase) => title.includes(phrase) || lore.includes(phrase),
+              );
+            });
+          } else {
+            // Single phrase: behave as before
+            filtered = filtered.filter(
+              (a) =>
+                a.title.toLowerCase().includes(phrases[0]) ||
+                a.lore.toLowerCase().includes(phrases[0]),
+            );
+          }
+          // Fallback: if no results, do AND word search for all words in all phrases
+          if (filtered.length === 0) {
+            const words =
+              phrases.length > 1
+                ? phrases.flatMap((p) => p.split(/\s+/))
+                : phrases[0].split(/\s+/);
+            filtered = auctions.filter((a) => {
+              const title = a.title.toLowerCase();
+              const lore = a.lore.toLowerCase();
+              // If enchantPhrases are present, keep that filter
+              if (
+                enchantPhrases.length > 0 &&
+                !enchantPhrases.every((phrase) =>
+                  lore.includes(phrase.toLowerCase()),
+                )
+              ) {
+                return false;
+              }
+              return words.every(
+                (word) => title.includes(word) || lore.includes(word),
+              );
+            });
+          }
+        }
+
+        auctions = filtered;
+      }
+
+      // Sorting
+      switch (args.sort) {
+        case SortOptions.PRICE_LOW:
+          auctions.sort((a, b) => {
+            const aBid =
+              typeof a.currentBid === "number" && !isNaN(a.currentBid)
+                ? a.currentBid
+                : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                  ? a.buyNowPrice
+                  : Infinity;
+            const bBid =
+              typeof b.currentBid === "number" && !isNaN(b.currentBid)
+                ? b.currentBid
+                : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                  ? b.buyNowPrice
+                  : Infinity;
+            return aBid - bBid;
+          });
+          break;
+        case SortOptions.PRICE_HIGH:
+          auctions.sort((a, b) => {
+            const aBid =
+              typeof a.currentBid === "number" && !isNaN(a.currentBid)
+                ? a.currentBid
+                : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                  ? a.buyNowPrice
+                  : -Infinity;
+            const bBid =
+              typeof b.currentBid === "number" && !isNaN(b.currentBid)
+                ? b.currentBid
+                : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                  ? b.buyNowPrice
+                  : -Infinity;
+            return bBid - aBid;
+          });
+          break;
+        case SortOptions.NEWEST:
+          auctions.sort((a, b) => b._creationTime - a._creationTime);
+          break;
+        case SortOptions.MOST_BIDS:
+          auctions.sort((a, b) => b.bidcount - a.bidcount);
+          break;
+        case SortOptions.ENDING_SOON:
+        default:
+          auctions.sort((a, b) => a.end - b.end);
+          break;
+      }
+
+      return auctions;
+    }
+
+    // Not own: use existing query logic
     let q = ctx.db.query("auctions");
 
     // Filter by category if provided and not "all"
@@ -51,8 +250,7 @@ export const get = query({
       q = q.filter((row) => row.gt(row.field("end"), now));
     }
 
-    let auctions = await q.collect();
-
+    auctions = await q.collect();
     // Search filter (case-insensitive, supports enchant:"..." key:value search, comma-separated phrase match, then AND word search)
     if (args.search && args.search.trim() !== "") {
       let searchTerm = args.search.trim().toLowerCase();

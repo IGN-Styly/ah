@@ -14,6 +14,7 @@ import {
 import { SortOptions } from "../../convex/auction";
 import { ArrowDownUp } from "lucide-react";
 import { LoadingCard } from "./loading-card";
+import { Id } from "@convex/_generated/dataModel";
 
 // Props for the AuctionGrid component
 export interface AuctionGridProps {
@@ -35,14 +36,16 @@ interface AuctionFilter {
     | "misc"
     | "all";
   sort: "highlow" | "lowhigh" | "soon" | "new" | "bids";
+  seller?: Id<"users">;
 }
 export default function AuctionGrid({ ...props }: AuctionGridProps) {
   const auctions = useQuery(api.auction.get, {
     listingType: props.filter?.listingType,
     category: props.filter?.categories,
     sort: props.filter?.sort,
-    includeEnded: false,
+    includeEnded: true,
     search: props.filter?.search,
+    own: props.filter?.seller,
   });
   const loading = Array.from({ length: 24 }, (_, i) => i + 1);
 

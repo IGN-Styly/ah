@@ -61,7 +61,6 @@ export const sellItem = mutation({
     ctx.db.delete(args.id);
     ctx.db.insert("auctions", {
       bidcount: 0,
-      bids: {},
       category: item.category,
       image: item.image,
       lore: item.lore,
