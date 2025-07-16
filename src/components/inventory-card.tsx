@@ -321,7 +321,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                       parsePrice(prices.bidPriceRaw) === 0)) ||
                   !prices.endDateRaw ||
                   !prices.endTimeRaw ||
-                  (prices.endDateRaw &&
+                  ((prices.endDateRaw &&
                     prices.endTimeRaw &&
                     (() => {
                       const dt = new Date(
@@ -332,7 +332,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                           ? new Date(startTime.getTime() + 6 * 60 * 60 * 1000)
                           : new Date(Date.now() + 6 * 60 * 60 * 1000);
                       return dt < minEnd;
-                    })())
+                    })()) as boolean)
                 }
               >
                 CONFIRM PRICES
