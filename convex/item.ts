@@ -52,7 +52,12 @@ export const sellItem = mutation({
     if (user.balance < taxAmount) {
       return { ok: false, message: "Insufficient balance to cover the tax." };
     }
-    ctx.db.patch(user._id, { balance: user.balance - taxAmount });
+    ctx.db.patch(user._id, {
+      balance: user.balance - taxAmount,
+      inventory: user.inventory.filter((c) => {
+        c != args.id;
+      }),
+    });
     ctx.db.delete(args.id);
     ctx.db.insert("auctions", {
       bidcount: 0,
