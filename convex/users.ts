@@ -1,8 +1,16 @@
-import { query, mutation, internalMutation, action } from "@convex/server";
+import {
+  query,
+  mutation,
+  internalMutation,
+  action,
+  internalQuery,
+} from "@convex/server";
 import { v } from "convex/values";
-import { ar } from "date-fns/locale";
 import { internal } from "./_generated/api";
-import { nan } from "zod";
+import { Id } from "./_generated/dataModel";
+import { get } from "./auction";
+
+import { betterAuthComponent } from "./auth";
 
 export const getUsername = query({
   args: { id: v.id("users") },
@@ -34,5 +42,23 @@ export const createUserAction = action({
   handler: async (ctx, args) => {
     // ... your logic here ...
     await ctx.runMutation(internal.users.createUser, { name: args.name });
+  },
+});
+
+export const signUser = internalQuery({
+  args: {},
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Unauthenticated call to mutation");
+    }
+    const userId = await betterAuthComponent.getAuthUserId(ctx);
+    if (!userId) {
+      return { user: null };
+    }
+
+    const user = await ctx.db.get(userId as Id<"users">);
+
+    return { user };
   },
 });

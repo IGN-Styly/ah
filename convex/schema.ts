@@ -30,14 +30,12 @@ export default defineSchema({
       v.string(),
       v.object({ id: v.id("users"), bid: v.number() }),
     ),
-    created: v.number(), // timestamp for "new" sorting
   })
     .index("by_price", ["currentBid"])
     .index("by_end", ["end"])
     .index("by_bidcount", ["bidcount"])
     .index("by_category", ["category"])
     .index("by_buyNowPrice", ["buyNowPrice"])
-    .index("by_created", ["created"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["lore"],

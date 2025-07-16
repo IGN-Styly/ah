@@ -172,7 +172,7 @@ export const get = query({
         });
         break;
       case SortOptions.NEWEST:
-        auctions.sort((a, b) => b.created - a.created);
+        auctions.sort((a, b) => b._creationTime - a._creationTime);
         break;
       case SortOptions.MOST_BIDS:
         auctions.sort((a, b) => b.bidcount - a.bidcount);

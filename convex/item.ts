@@ -1,8 +1,10 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { betterAuthComponent } from "./auth";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 import { get } from "./auction";
+import { api, internal } from "./_generated/api";
+import { tr } from "date-fns/locale";
 
 export const getItems = query({
   args: {
@@ -10,16 +12,10 @@ export const getItems = query({
     search: v.optional(v.string()), // Add search argument
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Unauthenticated call to mutation");
-    }
-    const userId = await betterAuthComponent.getAuthUserId(ctx);
-    if (!userId) {
-      return null;
-    }
     let items = [];
-    const user = await ctx.db.get(userId as Id<"users">);
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
     if (!user?.inventory) {
       return null;
     }
@@ -32,5 +28,36 @@ export const getItems = query({
         items.push(item);
     }
     return items;
+  },
+});
+export const sellItem = mutation({
+  args: {
+    id: v.id("items"),
+    end: v.number(),
+    bid: v.optional(v.number()),
+    bin: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    let item = await ctx.db.get(args.id);
+    if (!(user?.inventory.includes(args.id) && item)) {
+      throw Error("Invalid Sale");
+    }
+
+    // ctx.db.delete(args.id);
+    ctx.db.insert("auctions", {
+      bidcount: 0,
+      bids: {},
+      category: item.category,
+      image: item.image,
+      lore: item.lore,
+      seller: user._id,
+      title: item.title,
+      buyNowPrice: args.bin,
+      currentBid: args.bid,
+      end: args.end,
+    });
   },
 });

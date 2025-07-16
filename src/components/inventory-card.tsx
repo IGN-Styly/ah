@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { Card } from "./ui/card";
 import { useEffect, useRef, useState, MouseEvent, ReactNode } from "react";
-import { Doc } from "@convex/_generated/dataModel";
+import { Doc, Id } from "@convex/_generated/dataModel";
 import { NBTDisplay } from "./nbt";
 import { ItemImage } from "./ItemImage";
 import { Button } from "./ui/button";
@@ -13,6 +13,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { ChevronDownIcon } from "lucide-react";
 import { Input } from "./ui/input";
 import { Calendar } from "./ui/calendar";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { VId } from "convex/values";
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
   const [modalState, setModalState] = useState({
     isSellModalOpen: false,
@@ -34,7 +37,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
     endTimeRaw: "",
     endDateTime: null as Date | null,
   });
-
+  const sell = useMutation(api.item.sellItem);
   // Track auction start time for minimum duration
   const [startTime, setStartTime] = useState<Date | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -406,6 +409,18 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                 className="w-full rounded-none text-sm font-mono font-black mt-4"
                 onClick={() => {
                   console.log("Item listed for sale!");
+                  if (!prices.endDateTime) {
+                    return;
+                  }
+
+                  const saleObject = {
+                    id: item._id,
+                    ...(prices.binPrice !== null && { bin: prices.binPrice }),
+                    ...(prices.bidPrice !== null && { bid: prices.bidPrice }),
+                    end: prices.endDateTime.getTime(),
+                  };
+
+                  sell({ ...saleObject });
                   setModalState({ ...modalState, isReceiptModalOpen: false });
                 }}
               >
