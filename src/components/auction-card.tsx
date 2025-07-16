@@ -187,22 +187,43 @@ export function AuctionCard({ auction }: AuctionCardProps) {
 
           <div className="flex gap-2">
             {auction.seller === user?._id ? (
-              <Button
-                size="sm"
-                className="w-full rounded-none text-sm font-mono font-black bg-red-500 text-white"
-                onClick={async () => {
-                  let { message, ok } = await cancel({ id: auction._id });
-                  ok
-                    ? toast.success("Item Auctioned", {
-                        description: message,
-                      })
-                    : toast.error("Error", {
-                        description: message,
-                      });
-                }}
-              >
-                CANCEL
-              </Button>
+              isEnded ? (
+                <Button
+                  size="sm"
+                  className="w-full rounded-none text-sm font-mono font-black bg-green-500 text-white"
+                  onClick={async () => {
+                    // let { message, ok } = await api.auction.claimAuction({
+                    //   id: auction._id,
+                    // });
+                    // ok
+                    //   ? toast.success("Auction Claimed", {
+                    //       description: message,
+                    //     })
+                    //   : toast.error("Error", {
+                    //       description: message,
+                    //     });
+                  }}
+                >
+                  CLAIM
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="w-full rounded-none text-sm font-mono font-black bg-red-500 text-white"
+                  onClick={async () => {
+                    let { message, ok } = await cancel({ id: auction._id });
+                    ok
+                      ? toast.success("Item Auctioned", {
+                          description: message,
+                        })
+                      : toast.error("Error", {
+                          description: message,
+                        });
+                  }}
+                >
+                  CANCEL
+                </Button>
+              )
             ) : (
               <>
                 {auction.currentBid !== auction.buyNowPrice && (
