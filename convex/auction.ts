@@ -473,11 +473,19 @@ export const claimSellerAuction = mutation({
     if (auction.seller != user._id || auction.seller_claim) {
       return { ok: false, message: "You do not own this auction." };
     }
-    if (auction.bidid) {
-      const { bid } = (await ctx.db.get(auction.bidid)) as { bid: number };
-      ctx.db.patch(user._id, { balance: user.balance + bid });
-      ctx.db.delete(auction.bidid);
+    if (auction.currentBid) {
+      ctx.db.patch(user._id, { balance: user.balance + auction.currentBid });
       ctx.db.patch(auction._id, { seller_claim: true });
+    } else {
+      ctx.db.delete(auction._id);
+      const item = await ctx.db.insert("items", {
+        category: auction.category,
+        image: auction.image,
+        lore: auction.lore,
+        title: auction.title,
+      });
+      user.inventory.push(item);
+      ctx.db.patch(user._id, { inventory: user.inventory });
     }
     return { ok: true, message: "Succesfully claimed" };
   },
@@ -576,15 +584,23 @@ export const claimwinnerAuction = mutation({
         message: "You may not claim this item as you haven't won the auction",
       };
     }
+    if (auction.buyer_claim) {
+      return {
+        ok: false,
+        message: "You have already claimed this item",
+      };
+    }
 
     ctx.db.delete(tbid._id);
-    ctx.db.patch(auction._id, { bidid: undefined });
-    ctx.db.insert("items", {
+    ctx.db.patch(auction._id, { bidid: undefined, buyer_claim: true });
+    const item = await ctx.db.insert("items", {
       category: auction.category,
       image: auction.image,
       lore: auction.lore,
       title: auction.title,
     });
+    user.inventory.push(item);
+    ctx.db.patch(user._id, { inventory: user.inventory });
     return { ok: true, message: "Succesfully claimed" };
   },
 });

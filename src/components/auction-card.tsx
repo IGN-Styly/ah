@@ -32,7 +32,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
   let bid = useQuery(api.bids.getbid, { id: auction._id });
   const claimBidLost = useMutation(api.auction.claimbidderAuction);
-
+  const claimwinner = useMutation(api.auction.claimwinnerAuction);
   // Treat as ended if currentBid >= buyNowPrice and buyNowPrice is set
   const isBuyNowEnded =
     auction.buyNowPrice !== undefined &&
@@ -241,6 +241,19 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                           <Button
                             size="sm"
                             className="w-full rounded-none text-sm font-mono font-black"
+                            onClick={async () => {
+                              // claim-bid-lost
+                              const { ok, message } = await claimwinner({
+                                id: auction._id,
+                              });
+                              ok
+                                ? toast.success("Auction Claimed", {
+                                    description: message,
+                                  })
+                                : toast.error("Error", {
+                                    description: message,
+                                  });
+                            }}
                           >
                             Claim Item
                           </Button>
