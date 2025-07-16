@@ -24,6 +24,8 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [showBidModal, setShowBidModal] = useState(false);
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<HTMLDivElement>(null);
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
@@ -210,16 +212,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                 <Button
                   size="sm"
                   className="w-full rounded-none text-sm font-mono font-black bg-red-500 text-white"
-                  onClick={async () => {
-                    let { message, ok } = await cancel({ id: auction._id });
-                    ok
-                      ? toast.success("Item Auctioned", {
-                          description: message,
-                        })
-                      : toast.error("Error", {
-                          description: message,
-                        });
-                  }}
+                  onClick={() => setShowCancelConfirmModal(true)}
                 >
                   CANCEL
                 </Button>
@@ -444,6 +437,79 @@ export function AuctionCard({ auction }: AuctionCardProps) {
         onClose={() => setShowBuyNowModal(false)}
         auction={auction}
       />
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirmModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => !isCancelling && setShowCancelConfirmModal(false)}
+        >
+          <div
+            className="bg-background border-4 border-border shadow-[0px_0px_32px_0px_rgba(0,0,0,0.5)] rounded-none max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-2 border-muted m-4 rounded-none">
+              <div className="flex justify-between items-center mb-4 border-b-2 border-border pb-2">
+                <h3 className="font-bold text-foreground uppercase tracking-wider text-lg">
+                  Confirm Cancel Auction
+                </h3>
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0 rounded-full"
+                  onClick={() =>
+                    !isCancelling && setShowCancelConfirmModal(false)
+                  }
+                  disabled={isCancelling}
+                >
+                  ✕
+                </Button>
+              </div>
+              <div className="mb-6">
+                <p className="text-base text-foreground mb-2">
+                  Are you sure you want to cancel this auction?
+                </p>
+                <p className="text-sm text-red-600 font-semibold">
+                  You will <span className="underline">not</span> get any tax
+                  back if you cancel.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  className="rounded-none"
+                  onClick={() =>
+                    !isCancelling && setShowCancelConfirmModal(false)
+                  }
+                  disabled={isCancelling}
+                >
+                  No, go back
+                </Button>
+                <Button
+                  className="rounded-none"
+                  onClick={async () => {
+                    setIsCancelling(true);
+                    const { message, ok } = await cancel({ id: auction._id });
+                    setIsCancelling(false);
+                    setShowCancelConfirmModal(false);
+                    if (ok) {
+                      toast.success("Auction Cancelled", {
+                        description: message,
+                      });
+                    } else {
+                      toast.error("Error", {
+                        description: message,
+                      });
+                    }
+                  }}
+                  disabled={isCancelling}
+                >
+                  {isCancelling ? "Cancelling..." : "Yes, Cancel Auction"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
