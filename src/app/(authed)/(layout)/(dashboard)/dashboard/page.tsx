@@ -57,6 +57,7 @@ export default function Home() {
       sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
       listingType: listingType as "bin" | "bid" | "all",
       search: searchQuery,
+      ended: false,
     },
   };
   return (

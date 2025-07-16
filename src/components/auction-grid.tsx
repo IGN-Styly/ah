@@ -43,10 +43,11 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
     listingType: props.filter?.listingType,
     category: props.filter?.categories,
     sort: props.filter?.sort,
-    includeEnded: true,
+    includeEnded: props.filter?.ended,
     search: props.filter?.search,
     own: props.filter?.seller,
   });
+
   const loading = Array.from({ length: 24 }, (_, i) => i + 1);
 
   return (

@@ -249,6 +249,9 @@ export const get = query({
     const now = Date.now();
     if (args.includeEnded === false) {
       q = q.filter((row) => row.gt(row.field("end"), now));
+      q = q.filter((row) =>
+        row.gt(row.field("buyNowPrice"), row.field("currentBid")),
+      );
     }
 
     auctions = await q.collect();
