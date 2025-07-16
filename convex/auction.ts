@@ -482,6 +482,113 @@ export const claimSellerAuction = mutation({
     return { ok: true, message: "Succesfully claimed" };
   },
 });
+
+export const claimbidderAuction = mutation({
+  args: { id: v.id("auctions") },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+    const now = Date.now();
+    if (
+      auction.end > now &&
+      auction.currentBid &&
+      auction.buyNowPrice &&
+      auction.currentBid < auction.buyNowPrice
+    ) {
+      return { ok: false, message: "Auction hasn't ended" };
+    }
+    let tbid = await ctx.db
+      .query("bids")
+      .withIndex("by_userId", (q) => {
+        return q.eq("userId", user._id);
+      })
+      .filter((q) => {
+        return q.eq(q.field("auctionId"), auction._id);
+      })
+      .first();
+    if (!tbid) {
+      return {
+        ok: false,
+        message: "You do not have a bid in this auction",
+      };
+    }
+    if (auction.bidid == tbid?._id) {
+      return {
+        ok: false,
+        message: "You may not claim your bid as you won the auction",
+      };
+    }
+
+    ctx.db.patch(user._id, { balance: user.balance + tbid?.bid });
+    ctx.db.delete(tbid._id);
+    return { ok: true, message: "Succesfully claimed" };
+  },
+});
+
+export const claimwinnerAuction = mutation({
+  args: { id: v.id("auctions") },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+    const now = Date.now();
+    if (
+      auction.end > now &&
+      auction.currentBid &&
+      auction.buyNowPrice &&
+      auction.currentBid < auction.buyNowPrice
+    ) {
+      return { ok: false, message: "Auction hasn't ended" };
+    }
+    let tbid = await ctx.db
+      .query("bids")
+      .withIndex("by_userId", (q) => {
+        return q.eq("userId", user._id);
+      })
+      .filter((q) => {
+        return q.eq(q.field("auctionId"), auction._id);
+      })
+      .first();
+    if (!tbid) {
+      return {
+        ok: false,
+        message: "You do not have a bid in this auction",
+      };
+    }
+    if (auction.bidid != tbid?._id) {
+      return {
+        ok: false,
+        message: "You may not claim this item as you haven't won the auction",
+      };
+    }
+
+    ctx.db.delete(tbid._id);
+    ctx.db.patch(auction._id, { bidid: undefined });
+    ctx.db.insert("items", {
+      category: auction.category,
+      image: auction.image,
+      lore: auction.lore,
+      title: auction.title,
+    });
+    return { ok: true, message: "Succesfully claimed" };
+  },
+});
+
 export const buyItNow = mutation({
   args: { id: v.id("auctions") },
   handler: async (ctx, args) => {
@@ -509,6 +616,9 @@ export const buyItNow = mutation({
     }
     if (user.balance < auction.buyNowPrice) {
       return { ok: false, message: "Insufucient funds" };
+    }
+    if (user._id == auction.seller) {
+      return { ok: false, message: "You cannot buy your own item" };
     }
     const bid = await ctx.db.insert("bids", {
       auctionId: auction._id,
@@ -549,7 +659,7 @@ export const bid = mutation({
     ) {
       return { ok: false, message: "Auction has already ended" };
     }
-    if (args.amt < auction.currentBid) {
+    if (args.amt < auction.currentBid || user._id == auction.seller) {
       return { ok: false, message: "Invalid bid" };
     }
     if (user.balance < args.amt) {

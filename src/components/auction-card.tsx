@@ -31,6 +31,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   const hoverRef = useRef<HTMLDivElement>(null);
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
   let bid = useQuery(api.bids.getbid, { id: auction._id });
+  const claimBidLost = useMutation(api.auction.claimbidderAuction);
 
   // Treat as ended if currentBid >= buyNowPrice and buyNowPrice is set
   const isBuyNowEnded =
@@ -248,6 +249,19 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                         <Button
                           size="sm"
                           className="w-full rounded-none text-sm font-mono font-black"
+                          onClick={async () => {
+                            // claim-bid-lost
+                            const { ok, message } = await claimBidLost({
+                              id: auction._id,
+                            });
+                            ok
+                              ? toast.success("Auction Claimed", {
+                                  description: message,
+                                })
+                              : toast.error("Error", {
+                                  description: message,
+                                });
+                          }}
                         >
                           Claim Bid
                         </Button>
