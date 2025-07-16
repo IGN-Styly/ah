@@ -17,6 +17,7 @@ import { ItemImage } from "./ItemImage";
 import { toast } from "sonner";
 
 export function AuctionCard({ auction }: AuctionCardProps) {
+  const claimSeller = useMutation(api.auction.claimSellerAuction);
   const cancel = useMutation(api.auction.cancelAuction);
   const user = useQuery(api.auth.getCurrentUser);
   const [isHovered, setIsHovered] = useState(false);
@@ -29,6 +30,15 @@ export function AuctionCard({ auction }: AuctionCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<HTMLDivElement>(null);
   let name = useQuery(api.users.getUsername, { id: auction.seller })?.name;
+
+  // Treat as ended if currentBid >= buyNowPrice and buyNowPrice is set
+  const isBuyNowEnded =
+    auction.buyNowPrice !== undefined &&
+    auction.buyNowPrice !== null &&
+    auction.currentBid !== undefined &&
+    auction.currentBid !== null &&
+    auction.currentBid >= auction.buyNowPrice;
+
   // Calculate auction time remaining
   const getAuctionTimes = useCallback(() => {
     // Auction end time in ms (from schema)
@@ -39,7 +49,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
     const nowMs = Date.now();
 
     // If auction has ended
-    if (nowMs >= endTimeMs) {
+    if (nowMs >= endTimeMs || isBuyNowEnded) {
       return {
         timeRemaining: "ENDED",
         endTimeFormatted: format(endTime, "MMM d, yyyy 'at' h:mm a"),
@@ -70,7 +80,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
       isEnded: false,
       endTime,
     };
-  }, [auction.end]);
+  }, [auction.end, isBuyNowEnded]);
 
   const [auctionTimes, setAuctionTimes] = useState(getAuctionTimes());
   const { timeRemaining, endTimeFormatted, isEnded } = auctionTimes;
@@ -193,20 +203,22 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                 <Button
                   size="sm"
                   className="w-full rounded-none text-sm font-mono font-black bg-green-500 text-white"
+                  disabled={auction.seller_claim}
                   onClick={async () => {
-                    // let { message, ok } = await api.auction.claimAuction({
-                    //   id: auction._id,
-                    // });
-                    // ok
-                    //   ? toast.success("Auction Claimed", {
-                    //       description: message,
-                    //     })
-                    //   : toast.error("Error", {
-                    //       description: message,
-                    //     });
+                    if (auction.seller_claim) return;
+                    let { ok, message } = await claimSeller({
+                      id: auction._id,
+                    });
+                    ok
+                      ? toast.success("Auction Claimed", {
+                          description: message,
+                        })
+                      : toast.error("Error", {
+                          description: message,
+                        });
                   }}
                 >
-                  CLAIM
+                  {auction.seller_claim ? "Already Claimed" : "CLAIM"}
                 </Button>
               ) : (
                 <Button
@@ -219,7 +231,7 @@ export function AuctionCard({ auction }: AuctionCardProps) {
               )
             ) : (
               <>
-                {auction.currentBid !== auction.buyNowPrice && (
+                {isBuyNowEnded ? (
                   <Button
                     size="sm"
                     className="w-full rounded-none text-sm font-mono font-black"
@@ -227,26 +239,29 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                   >
                     N/A
                   </Button>
-                )}
-                {auction.currentBid !== undefined &&
-                  !isNaN(auction.currentBid) && (
-                    <Button
-                      size="sm"
-                      className="flex-1 rounded-none text-sm font-mono font-black"
-                      onClick={() => setShowBidModal(true)}
-                    >
-                      BID
-                    </Button>
-                  )}
-                {auction.buyNowPrice && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
-                    onClick={() => setShowBuyNowModal(true)}
-                  >
-                    BUY
-                  </Button>
+                ) : (
+                  <>
+                    {auction.currentBid !== undefined &&
+                      !isNaN(auction.currentBid) && (
+                        <Button
+                          size="sm"
+                          className="flex-1 rounded-none text-sm font-mono font-black"
+                          onClick={() => setShowBidModal(true)}
+                        >
+                          BID
+                        </Button>
+                      )}
+                    {auction.buyNowPrice && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
+                        onClick={() => setShowBuyNowModal(true)}
+                      >
+                        BUY
+                      </Button>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -374,40 +389,41 @@ export function AuctionCard({ auction }: AuctionCardProps) {
                   </div>
 
                   <div className="flex gap-2 mt-4">
-                    {(auction.currentBid == auction.buyNowPrice) == false ? (
-                      <></>
-                    ) : (
+                    {isBuyNowEnded ? (
                       <Button
                         disabled
                         className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
                       >
                         N/A
                       </Button>
-                    )}
-                    {auction.currentBid ? (
-                      <Button
-                        className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          setShowBidModal(true);
-                        }}
-                      >
-                        PLACE BID
-                      </Button>
                     ) : (
-                      <></>
-                    )}
-                    {auction.buyNowPrice && (
-                      <Button
-                        variant="outline"
-                        className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          setShowBuyNowModal(true);
-                        }}
-                      >
-                        BUY NOW
-                      </Button>
+                      <>
+                        {auction.currentBid ? (
+                          <Button
+                            className={`rounded-none text-sm font-mono font-black ${auction.buyNowPrice ? "flex-1" : "w-full"}`}
+                            onClick={() => {
+                              setIsModalOpen(false);
+                              setShowBidModal(true);
+                            }}
+                          >
+                            PLACE BID
+                          </Button>
+                        ) : (
+                          <></>
+                        )}
+                        {auction.buyNowPrice && (
+                          <Button
+                            variant="outline"
+                            className="flex-1 rounded-none font-black font-mono bg-transparent text-sm"
+                            onClick={() => {
+                              setIsModalOpen(false);
+                              setShowBuyNowModal(true);
+                            }}
+                          >
+                            BUY NOW
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -426,17 +442,22 @@ export function AuctionCard({ auction }: AuctionCardProps) {
         </div>
       )}
 
-      <BidModal
-        isOpen={showBidModal}
-        onClose={() => setShowBidModal(false)}
-        auction={auction}
-      />
+      {/* Only show BidModal and BuyNowModal if not ended */}
+      {!isBuyNowEnded && (
+        <BidModal
+          isOpen={showBidModal}
+          onClose={() => setShowBidModal(false)}
+          auction={auction}
+        />
+      )}
 
-      <BuyNowModal
-        isOpen={showBuyNowModal}
-        onClose={() => setShowBuyNowModal(false)}
-        auction={auction}
-      />
+      {!isBuyNowEnded && (
+        <BuyNowModal
+          isOpen={showBuyNowModal}
+          onClose={() => setShowBuyNowModal(false)}
+          auction={auction}
+        />
+      )}
 
       {/* Cancel Confirmation Modal */}
       {showCancelConfirmModal && (

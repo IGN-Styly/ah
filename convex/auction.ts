@@ -2,6 +2,7 @@ import { query, mutation } from "@convex/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
+import { useMutation } from "convex/react";
 
 // Sort types
 export const SortOptions = {
@@ -390,6 +391,8 @@ export const get = query({
 export const create = mutation({
   args: {
     item: v.object({
+      seller_claim: v.boolean(),
+      buyer_claim: v.boolean(),
       title: v.string(),
       lore: v.string(),
       image: v.string(),
@@ -399,11 +402,6 @@ export const create = mutation({
       bidcount: v.number(),
       seller: v.id("users"),
       category: v.string(),
-      bids: v.record(
-        v.string(),
-        v.object({ id: v.id("users"), bid: v.number() }),
-      ),
-      created: v.number(),
     }),
   },
   handler: async (ctx, args) => {
@@ -444,4 +442,38 @@ export const cancelAuction = mutation({
     };
   },
   returns: { ok: v.boolean(), message: v.string() },
+});
+export const claimSellerAuction = mutation({
+  args: { id: v.id("auctions") },
+  handler: async (ctx, args) => {
+    const { user } = (await ctx.runQuery(internal.users.signUser)) as {
+      user: Doc<"users"> | null;
+    };
+    if (!user) {
+      return { ok: false, message: "Invalid Signin" };
+    }
+    const auction = await ctx.db.get(args.id);
+    if (!auction) {
+      return { ok: false, message: "Auction not found" };
+    }
+    const now = Date.now();
+    if (
+      auction.end > now &&
+      auction.currentBid &&
+      auction.buyNowPrice &&
+      auction.currentBid < auction.buyNowPrice
+    ) {
+      return { ok: false, message: "Auction hasn't ended" };
+    }
+    if (auction.seller != user._id || auction.seller_claim) {
+      return { ok: false, message: "You do not own this auction." };
+    }
+    if (auction.bidid) {
+      const { bid } = (await ctx.db.get(auction.bidid)) as { bid: number };
+      ctx.db.patch(user._id, { balance: user.balance + bid });
+      ctx.db.delete(auction.bidid);
+      ctx.db.patch(auction._id, { seller_claim: true });
+    }
+    return { ok: true, message: "Succesfully claimed" };
+  },
 });

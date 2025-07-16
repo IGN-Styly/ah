@@ -55,11 +55,13 @@ export const sellItem = mutation({
     ctx.db.patch(user._id, {
       balance: user.balance - taxAmount,
       inventory: user.inventory.filter((c) => {
-        c != args.id;
+        return c != args.id;
       }),
     });
     ctx.db.delete(args.id);
     ctx.db.insert("auctions", {
+      buyer_claim: false,
+      seller_claim: false,
       bidcount: 0,
       category: item.category,
       image: item.image,

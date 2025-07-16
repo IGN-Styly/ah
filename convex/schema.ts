@@ -14,7 +14,6 @@ export default defineSchema({
     name: v.string(),
     balance: v.number(),
     inventory: v.array(v.id("items")),
-    auctions: v.array(v.id("auctions")),
   }),
   bids: defineTable({
     userId: v.id("users"),
@@ -24,9 +23,12 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_auctionId", ["auctionId"]),
   auctions: defineTable({
+    seller_claim: v.boolean(),
+    buyer_claim: v.boolean(),
     title: v.string(),
     lore: v.string(),
     image: v.string(),
+    bidid: v.optional(v.id("bids")),
     currentBid: v.optional(v.number()),
     buyNowPrice: v.optional(v.number()),
     end: v.number(),
@@ -34,6 +36,7 @@ export default defineSchema({
     seller: v.id("users"),
     category: v.string(), // fixed typo and made it a string for indexing
   })
+    .index("by_bidid", ["bidid"])
     .index("by_price", ["currentBid"])
     .index("by_end", ["end"])
     .index("by_bidcount", ["bidcount"])
