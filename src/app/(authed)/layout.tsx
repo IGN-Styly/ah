@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { getToken } from "@convex-dev/better-auth/nextjs";
 import { api } from "@convex/_generated/api";
@@ -8,7 +9,12 @@ import { NextResponse } from "next/server";
 const layout = async ({ children }: { children: React.ReactNode }) => {
   const token = await getToken(createAuth);
   if (token) {
-    return <>{children}</>;
+    return (
+      <>
+        <Toaster />
+        {children}
+      </>
+    );
   } else {
     return redirect("/signin");
   }

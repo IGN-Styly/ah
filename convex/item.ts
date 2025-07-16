@@ -4,8 +4,8 @@ import { betterAuthComponent } from "./auth";
 import { Doc, Id } from "./_generated/dataModel";
 import { get } from "./auction";
 import { api, internal } from "./_generated/api";
-import { tr } from "date-fns/locale";
-
+import { ar, tr } from "date-fns/locale";
+import AppConfig from "@/lib/config";
 export const getItems = query({
   args: {
     category: v.optional(v.string()),
@@ -43,10 +43,17 @@ export const sellItem = mutation({
     };
     let item = await ctx.db.get(args.id);
     if (!(user?.inventory.includes(args.id) && item)) {
-      throw Error("Invalid Sale");
+      return { ok: false, message: "Insufficient balance to cover the tax." };
     }
 
-    // ctx.db.delete(args.id);
+    const highestValue = Math.max(args.bin || 0, args.bid || 0);
+    const taxAmount = AppConfig.TAX * highestValue;
+
+    if (user.balance < taxAmount) {
+      return { ok: false, message: "Insufficient balance to cover the tax." };
+    }
+    ctx.db.patch(user._id, { balance: user.balance - taxAmount });
+    ctx.db.delete(args.id);
     ctx.db.insert("auctions", {
       bidcount: 0,
       bids: {},
@@ -59,5 +66,7 @@ export const sellItem = mutation({
       currentBid: args.bid,
       end: args.end,
     });
+    return { ok: true, message: "Auction Created!" };
   },
+  returns: { ok: v.boolean(), message: v.string() },
 });

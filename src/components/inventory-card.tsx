@@ -1,7 +1,14 @@
 "use client";
 import Image from "next/image";
 import { Card } from "./ui/card";
-import { useEffect, useRef, useState, MouseEvent, ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  MouseEvent,
+  ReactNode,
+  CSSProperties,
+} from "react";
 import { Doc, Id } from "@convex/_generated/dataModel";
 import { NBTDisplay } from "./nbt";
 import { ItemImage } from "./ItemImage";
@@ -16,6 +23,7 @@ import { Calendar } from "./ui/calendar";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { VId } from "convex/values";
+import { toast } from "sonner";
 const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
   const [modalState, setModalState] = useState({
     isSellModalOpen: false,
@@ -407,7 +415,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
               </div>
               <Button
                 className="w-full rounded-none text-sm font-mono font-black mt-4"
-                onClick={() => {
+                onClick={async () => {
                   console.log("Item listed for sale!");
                   if (!prices.endDateTime) {
                     return;
@@ -420,8 +428,15 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                     end: prices.endDateTime.getTime(),
                   };
 
-                  sell({ ...saleObject });
+                  let { ok, message } = await sell({ ...saleObject });
                   setModalState({ ...modalState, isReceiptModalOpen: false });
+                  ok
+                    ? toast.success("Item Auctioned", {
+                        description: message,
+                      })
+                    : toast.error("Error", {
+                        description: message,
+                      });
                 }}
               >
                 CONFIRM SALE
