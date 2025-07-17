@@ -3,16 +3,6 @@ import { example, jsonexample, parseNBT } from "./nbt";
 import { api } from "@convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { Button } from "./ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { SortOptions } from "../../convex/auction";
-import { ArrowDownUp } from "lucide-react";
 import { LoadingCard } from "./loading-card";
 import { Id } from "@convex/_generated/dataModel";
 

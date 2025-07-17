@@ -44,7 +44,14 @@ export default defineSchema({
     .index("by_buyNowPrice", ["buyNowPrice"])
     .index("by_seller", ["seller"])
     .searchIndex("search_title", {
-      searchField: "title",
-      filterFields: ["lore"],
+      searchField: "lore",
+      filterFields: [
+        "end",
+        "category",
+        "_creationTime",
+        "currentBid",
+        "buyNowPrice",
+        "bidcount",
+      ],
     }),
 });
