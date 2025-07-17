@@ -25,6 +25,7 @@ export const get = query({
   handler: async (ctx, args) => {
     let auctions: Doc<"auctions">[] = [];
 
+    let q;
     if (args.own) {
       // Fetch auctions where the user is the seller
       const sellingAuctions = await ctx.db
@@ -219,16 +220,40 @@ export const get = query({
 
       return auctions;
     }
-
     // Not own: use existing query logic
-    let q = ctx.db.query("auctions");
+    if (args.search) {
+      q = ctx.db.query("auctions").withSearchIndex("search_title", (q) => {
+        return q.search("lore", args.search as string);
+      });
+    } else {
+      q = ctx.db.query("auctions");
+      switch (args.sort) {
+        case SortOptions.PRICE_LOW:
+          q = q.withIndex("by_price").order("asc");
+          break;
+        case SortOptions.PRICE_HIGH:
+          q = q.withIndex("by_price").order("desc");
+          break;
+        case SortOptions.NEWEST:
+          q = q.withIndex("by_creation_time").order("desc");
+          break;
+        case SortOptions.MOST_BIDS:
+          q = q.withIndex("by_bidcount").order("desc");
+          break;
+        case SortOptions.ENDING_SOON:
+        default:
+          q = q.withIndex("by_end").order("asc");
+          break;
+      }
+    }
 
     // Filter by category if provided and not "all"
     if (args.category && args.category !== "all") {
-      q = q.filter((row) => row.eq(row.field("category"), args.category));
+      q = q.filter((p) => p.eq(p.field("category"), args.category));
     }
 
     // Filter by listing type
+
     if (args.listingType === "bin") {
       q = q.filter((row) =>
         row.and(
@@ -236,11 +261,13 @@ export const get = query({
           row.neq(row.field("buyNowPrice"), null),
         ),
       );
-    } else if (args.listingType === "bid") {
+    } else if (args.listingType === "auctions") {
       q = q.filter((row) =>
-        row.or(
-          row.eq(row.field("buyNowPrice"), undefined),
-          row.eq(row.field("buyNowPrice"), null),
+        row.not(
+          row.or(
+            row.eq(row.field("currentBid"), undefined),
+            row.eq(row.field("currentBid"), null),
+          ),
         ),
       );
     }
@@ -253,138 +280,54 @@ export const get = query({
         row.gt(row.field("buyNowPrice"), row.field("currentBid")),
       );
     }
-
     auctions = await q.collect();
-    // Search filter (case-insensitive, supports enchant:"..." key:value search, comma-separated phrase match, then AND word search)
-    if (args.search && args.search.trim() !== "") {
-      let searchTerm = args.search.trim().toLowerCase();
-
-      // Parse all enchant:"..." key:value searches
-      const enchantRegex = /enchant:"([^"]+)"/g;
-      let enchantPhrases: string[] = [];
-      let match;
-      while ((match = enchantRegex.exec(searchTerm)) !== null) {
-        enchantPhrases.push(match[1].trim());
-      }
-      // Remove all enchant:"..." from the search term for further processing
-      if (enchantPhrases.length > 0) {
-        searchTerm = searchTerm
-          .replace(/enchant:"([^"]+)"/g, "")
-          .replace(/\s{2,}/g, " ")
-          .trim();
-      }
-
-      // Split by comma for phrase search, trim each phrase
-      const phrases = searchTerm
-        .split(",")
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0);
-
-      let filtered: typeof auctions = auctions;
-
-      // If enchant:"..." is present, filter by all phrases in lore (AND logic)
-      if (enchantPhrases.length > 0) {
-        filtered = filtered.filter((a) => {
-          const lore = a.lore.toLowerCase();
-          return enchantPhrases.every((phrase) =>
-            lore.includes(phrase.toLowerCase()),
-          );
-        });
-      }
-
-      // If there are still search terms left, apply phrase/word search
-      if (phrases.length > 0 && phrases.some((p) => p.length > 0)) {
-        if (phrases.length > 1) {
-          // All phrases must be present as substrings in title or lore
-          filtered = filtered.filter((a) => {
-            const title = a.title.toLowerCase();
-            const lore = a.lore.toLowerCase();
-            return phrases.every(
-              (phrase) => title.includes(phrase) || lore.includes(phrase),
-            );
+    if (args.search) {
+      switch (args.sort) {
+        case SortOptions.PRICE_LOW:
+          auctions.sort((a, b) => {
+            const aBid =
+              typeof a.currentBid === "number" && !isNaN(a.currentBid)
+                ? a.currentBid
+                : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                  ? a.buyNowPrice
+                  : Infinity;
+            const bBid =
+              typeof b.currentBid === "number" && !isNaN(b.currentBid)
+                ? b.currentBid
+                : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                  ? b.buyNowPrice
+                  : Infinity;
+            return aBid - bBid;
           });
-        } else {
-          // Single phrase: behave as before
-          filtered = filtered.filter(
-            (a) =>
-              a.title.toLowerCase().includes(phrases[0]) ||
-              a.lore.toLowerCase().includes(phrases[0]),
-          );
-        }
-        // Fallback: if no results, do AND word search for all words in all phrases
-        if (filtered.length === 0) {
-          const words =
-            phrases.length > 1
-              ? phrases.flatMap((p) => p.split(/\s+/))
-              : phrases[0].split(/\s+/);
-          filtered = auctions.filter((a) => {
-            const title = a.title.toLowerCase();
-            const lore = a.lore.toLowerCase();
-            // If enchantPhrases are present, keep that filter
-            if (
-              enchantPhrases.length > 0 &&
-              !enchantPhrases.every((phrase) =>
-                lore.includes(phrase.toLowerCase()),
-              )
-            ) {
-              return false;
-            }
-            return words.every(
-              (word) => title.includes(word) || lore.includes(word),
-            );
+          break;
+        case SortOptions.PRICE_HIGH:
+          auctions.sort((a, b) => {
+            const aBid =
+              typeof a.currentBid === "number" && !isNaN(a.currentBid)
+                ? a.currentBid
+                : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
+                  ? a.buyNowPrice
+                  : -Infinity;
+            const bBid =
+              typeof b.currentBid === "number" && !isNaN(b.currentBid)
+                ? b.currentBid
+                : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
+                  ? b.buyNowPrice
+                  : -Infinity;
+            return bBid - aBid;
           });
-        }
+          break;
+        case SortOptions.NEWEST:
+          auctions.sort((a, b) => b._creationTime - a._creationTime);
+          break;
+        case SortOptions.MOST_BIDS:
+          auctions.sort((a, b) => b.bidcount - a.bidcount);
+          break;
+        case SortOptions.ENDING_SOON:
+        default:
+          auctions.sort((a, b) => a.end - b.end);
+          break;
       }
-
-      auctions = filtered;
-    }
-
-    // Sorting
-    switch (args.sort) {
-      case SortOptions.PRICE_LOW:
-        auctions.sort((a, b) => {
-          const aBid =
-            typeof a.currentBid === "number" && !isNaN(a.currentBid)
-              ? a.currentBid
-              : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
-                ? a.buyNowPrice
-                : Infinity;
-          const bBid =
-            typeof b.currentBid === "number" && !isNaN(b.currentBid)
-              ? b.currentBid
-              : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
-                ? b.buyNowPrice
-                : Infinity;
-          return aBid - bBid;
-        });
-        break;
-      case SortOptions.PRICE_HIGH:
-        auctions.sort((a, b) => {
-          const aBid =
-            typeof a.currentBid === "number" && !isNaN(a.currentBid)
-              ? a.currentBid
-              : typeof a.buyNowPrice === "number" && !isNaN(a.buyNowPrice)
-                ? a.buyNowPrice
-                : -Infinity;
-          const bBid =
-            typeof b.currentBid === "number" && !isNaN(b.currentBid)
-              ? b.currentBid
-              : typeof b.buyNowPrice === "number" && !isNaN(b.buyNowPrice)
-                ? b.buyNowPrice
-                : -Infinity;
-          return bBid - aBid;
-        });
-        break;
-      case SortOptions.NEWEST:
-        auctions.sort((a, b) => b._creationTime - a._creationTime);
-        break;
-      case SortOptions.MOST_BIDS:
-        auctions.sort((a, b) => b.bidcount - a.bidcount);
-        break;
-      case SortOptions.ENDING_SOON:
-      default:
-        auctions.sort((a, b) => a.end - b.end);
-        break;
     }
 
     return auctions;
