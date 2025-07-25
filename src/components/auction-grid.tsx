@@ -54,7 +54,7 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
     { initialNumItems: 18 },
   );
 
-  const loading = Array.from({ length: 24 }, (_, i) => i + 1);
+  const loading = Array.from({ length: 18 }, (_, i) => i + 1);
 
   return (
     <main className="p-4">
