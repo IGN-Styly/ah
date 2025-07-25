@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import { useMutation } from "convex/react";
+import { paginationOptsValidator } from "convex/server";
 
 // Sort types
 export const SortOptions = {
@@ -214,10 +215,9 @@ export const get = query({
     listingType: v.optional(v.string()), // NEW
     search: v.optional(v.string()), // Add search argument
     own: v.optional(v.id("users")),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    let auctions: Doc<"auctions">[] = [];
-
     let q;
 
     // Not own: use existing query logic
@@ -277,15 +277,17 @@ export const get = query({
     if (args.includeEnded === false) {
       q = q.filter((row) => row.gt(row.field("end"), now));
       q = q.filter((row) =>
-        row.gt(row.field("buyNowPrice"), row.field("currentBid")),
+        row.or(
+          row.gt(row.field("buyNowPrice"), row.field("currentBid")),
+          row.eq(row.field("buyNowPrice"), null),
+        ),
       );
     }
-
-    auctions = await q.collect();
+    let auctions = await q.paginate(args.paginationOpts);
     if (args.search) {
       switch (args.sort) {
         case SortOptions.PRICE_LOW:
-          auctions.sort((a, b) => {
+          auctions.page.sort((a, b) => {
             const aBid =
               typeof a.currentBid === "number" && !isNaN(a.currentBid)
                 ? a.currentBid
@@ -302,7 +304,7 @@ export const get = query({
           });
           break;
         case SortOptions.PRICE_HIGH:
-          auctions.sort((a, b) => {
+          auctions.page.sort((a, b) => {
             const aBid =
               typeof a.currentBid === "number" && !isNaN(a.currentBid)
                 ? a.currentBid
@@ -319,14 +321,14 @@ export const get = query({
           });
           break;
         case SortOptions.NEWEST:
-          auctions.sort((a, b) => b._creationTime - a._creationTime);
+          auctions.page.sort((a, b) => b._creationTime - a._creationTime);
           break;
         case SortOptions.MOST_BIDS:
-          auctions.sort((a, b) => b.bidcount - a.bidcount);
+          auctions.page.sort((a, b) => b.bidcount - a.bidcount);
           break;
         case SortOptions.ENDING_SOON:
         default:
-          auctions.sort((a, b) => a.end - b.end);
+          auctions.page.sort((a, b) => a.end - b.end);
           break;
       }
     }
