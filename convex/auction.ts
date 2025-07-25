@@ -216,6 +216,7 @@ export const get = query({
     search: v.optional(v.string()), // Add search argument
     own: v.optional(v.id("users")),
     paginationOpts: paginationOptsValidator,
+    now: v.number(),
   },
   handler: async (ctx, args) => {
     console.log(args.paginationOpts);
@@ -273,10 +274,9 @@ export const get = query({
       );
     }
 
-    // Filter out ended auctions if includeEnded is false
-    const now = Date.now();
+    // const now = Date.now();
     if (args.includeEnded === false) {
-      q = q.filter((row) => row.gt(row.field("end"), now));
+      q = q.filter((row) => row.gt(row.field("end"), args.now));
       q = q.filter((row) =>
         row.or(
           row.gt(row.field("buyNowPrice"), row.field("currentBid")),

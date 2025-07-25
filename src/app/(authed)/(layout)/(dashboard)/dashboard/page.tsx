@@ -48,15 +48,22 @@ export default function Home() {
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10; // This would typically come from your API or data source
 
+  // let propsf: AuctionGridProps = {
+  //   filter: {
+  //     categories: selectedCategory,
+  //     sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
+  //     listingType: listingType as "bin" | "bid" | "all",
+  //     search: searchQuery,
+  //     ended: false,
+  //   },
+  // };
   let propsf: AuctionGridProps = {
     filter: {
-      categories: selectedCategory,
-      sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
-      listingType: listingType as "bin" | "bid" | "all",
-      search: searchQuery,
+      categories: "all",
+      sort: "new",
+      listingType: "all",
+      search: undefined,
       ended: false,
     },
   };
