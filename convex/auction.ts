@@ -218,6 +218,7 @@ export const get = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
+    console.log(args.paginationOpts);
     let q;
 
     // Not own: use existing query logic
