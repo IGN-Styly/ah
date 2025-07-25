@@ -49,24 +49,16 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // let propsf: AuctionGridProps = {
-  //   filter: {
-  //     categories: selectedCategory,
-  //     sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
-  //     listingType: listingType as "bin" | "bid" | "all",
-  //     search: searchQuery,
-  //     ended: false,
-  //   },
-  // };
   let propsf: AuctionGridProps = {
     filter: {
-      categories: "all",
-      sort: "new",
-      listingType: "all",
-      search: undefined,
+      categories: selectedCategory,
+      sort: sortBy as "highlow" | "lowhigh" | "soon" | "new" | "bids",
+      listingType: listingType as "bin" | "bid" | "all",
+      search: searchQuery,
       ended: false,
     },
   };
+
   return (
     <div className=" ">
       <Navbar />

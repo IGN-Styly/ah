@@ -51,7 +51,7 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
       own: props.filter?.seller,
       now: date,
     },
-    { initialNumItems: 10 },
+    { initialNumItems: 18 },
   );
 
   const loading = Array.from({ length: 24 }, (_, i) => i + 1);
