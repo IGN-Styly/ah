@@ -5,8 +5,16 @@ import { usePaginatedQuery, useQuery } from "convex/react";
 import { useState } from "react";
 import { LoadingCard } from "./loading-card";
 import { Id } from "@convex/_generated/dataModel";
-import { useNextPrevPaginatedQuery } from "./hooks/usePagePagination";
-
+import {
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  Pagination,
+  PaginationContent,
+  PaginationPrevious,
+} from "./ui/pagination";
+import { useNextPrevPaginatedQuery } from "convex-use-next-prev-paginated-query";
 // Props for the AuctionGrid component
 export interface AuctionGridProps {
   filter?: AuctionFilter;
@@ -40,11 +48,12 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
       search: props.filter?.search,
       own: props.filter?.seller,
     },
-    { initialNumItems: 100 },
+    { initialNumItems: 10 },
   );
 
   const loading = Array.from({ length: 24 }, (_, i) => i + 1);
   console.log(auctions);
+
   return (
     <main className="p-4">
       <div className="max-w-[1600px] mx-auto">
@@ -54,6 +63,39 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
                 <AuctionCard key={auction._id} auction={auction} />
               ))
             : loading.map((c) => <LoadingCard key={c} />)}
+        </div>
+        <div className="mt-5">
+          {auctions._tag == "Loaded" ? (
+            <Pagination>
+              <PaginationContent>
+                {auctions.loadPrev && (
+                  <PaginationItem>
+                    <PaginationPrevious onClick={auctions.loadPrev} />
+                  </PaginationItem>
+                )}
+
+                {auctions.loadNext && (
+                  <PaginationItem>
+                    <PaginationNext onClick={auctions.loadNext} />
+                  </PaginationItem>
+                )}
+              </PaginationContent>
+            </Pagination>
+          ) : (
+            <>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious />
+                  </PaginationItem>
+
+                  <PaginationItem>
+                    <PaginationNext />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </>
+          )}
         </div>
       </div>
     </main>
