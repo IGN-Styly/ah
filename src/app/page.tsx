@@ -34,9 +34,6 @@ export default function Home() {
             AuctionHouse
           </h1>
         </div>
-        <SignIn />
-        <AuctionGrid />
-        <ModeToggle />
       </main>
     </div>
   );
