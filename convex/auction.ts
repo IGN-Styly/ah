@@ -5,6 +5,7 @@ import { Doc, Id } from "./_generated/dataModel";
 import { useMutation } from "convex/react";
 import { paginationOptsValidator } from "convex/server";
 import { formatPriceBNK } from "@/lib/price";
+import AppConfig from "@/lib/config";
 
 // Sort types
 export const SortOptions = {
@@ -654,7 +655,12 @@ export const buyItNow = mutation({
       currentBid: auction.buyNowPrice,
       bidcount: auction.bidcount + 1,
     });
-    ctx.db.patch(user._id, { balance: user.balance - auction.buyNowPrice });
+    ctx.db.patch(user._id, {
+      balance:
+        user.balance -
+        auction.buyNowPrice * AppConfig.TAX -
+        auction.buyNowPrice,
+    });
     return {
       ok: true,
       message:

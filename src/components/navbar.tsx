@@ -30,7 +30,8 @@ import { formatPriceBNK } from "@/lib/price";
 export default function Navbar() {
   let user = useQuery(api.auth.getCurrentUser);
   const { theme } = useTheme();
-  const isDark = theme === "dark" || theme === undefined;
+  const isDark = theme === "dark" || theme === undefined || theme !== "light";
+  console.log(theme);
   let route = useRouter();
   return (
     <nav className="sticky z-50 px-6 py-4 top-0">
