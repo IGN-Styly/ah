@@ -55,7 +55,6 @@ export default function ItemGrid({ ...props }: ItemGridProps) {
     },
     { initialNumItems: 48 },
   );
-  console.log(items);
   const loading = Array.from({ length: 24 }, (_, i) => i + 1);
   return (
     <main className="p-4">

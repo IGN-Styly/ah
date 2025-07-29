@@ -46,8 +46,6 @@ const InventoryPage = () => {
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10; // This would typically come from your API or data source
 
   let propsf: ItemGridProps = {
     filter: {

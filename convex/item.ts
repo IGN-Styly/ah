@@ -23,8 +23,9 @@ export const getItems = query({
     }
     let items = await ctx.db
       .query("items")
-      .filter((f) => f.eq(user._id, f.field("_id")))
+      .filter((f) => f.eq(user._id, f.field("user")))
       .paginate(args.paginationOpts);
+
     return items;
   },
 });
