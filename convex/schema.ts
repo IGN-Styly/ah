@@ -7,6 +7,7 @@ export default defineSchema({
     title: v.string(),
     lore: v.string(),
     image: v.string(),
+    user: v.id("users"),
   })
     .index("by_title", ["title"])
     .index("by_category", ["category"]),

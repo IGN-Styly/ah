@@ -388,6 +388,7 @@ export const cancelAuction = mutation({
       image: auction.image,
       lore: auction.lore,
       title: auction.title,
+      user: user._id,
     });
     user.inventory.push(itemId);
     ctx.db.patch(user._id, { inventory: user.inventory });
@@ -433,6 +434,7 @@ export const claimSellerAuction = mutation({
         image: auction.image,
         lore: auction.lore,
         title: auction.title,
+        user: user._id,
       });
       user.inventory.push(item);
       ctx.db.patch(user._id, { inventory: user.inventory });
@@ -548,6 +550,7 @@ export const claimwinnerAuction = mutation({
       image: auction.image,
       lore: auction.lore,
       title: auction.title,
+      user: user._id,
     });
     user.inventory.push(item);
     ctx.db.patch(user._id, { inventory: user.inventory });
