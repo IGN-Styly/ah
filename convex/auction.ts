@@ -366,11 +366,17 @@ export const cancelAuction = mutation({
       user: Doc<"users"> | null;
     };
     if (!user) {
-      return { ok: false, message: "Invalid Signin" };
+      return {
+        ok: false,
+        message: "You must be signed in to cancel an auction.",
+      };
     }
     const auction = await ctx.db.get(args.id);
     if (!auction) {
-      return { ok: false, message: "Auction not found" };
+      return {
+        ok: false,
+        message: "The auction you are trying to cancel does not exist.",
+      };
     }
 
     const now = Date.now();
@@ -380,7 +386,10 @@ export const cancelAuction = mutation({
         auction.currentBid &&
         auction.currentBid >= auction.buyNowPrice)
     ) {
-      return { ok: false, message: "Auction has already ended" };
+      return {
+        ok: false,
+        message: "The auction has already ended and cannot be canceled.",
+      };
     }
     await ctx.db.delete(auction._id);
     const itemId = await ctx.db.insert("items", {
@@ -394,7 +403,8 @@ export const cancelAuction = mutation({
     ctx.db.patch(user._id, { inventory: user.inventory });
     return {
       ok: true,
-      message: "Canceled auction and transfered item to your inventory",
+      message:
+        "The auction has been successfully canceled, and the item has been returned to your inventory.",
     };
   },
   returns: { ok: v.boolean(), message: v.string() },
@@ -407,11 +417,17 @@ export const claimSellerAuction = mutation({
       user: Doc<"users"> | null;
     };
     if (!user) {
-      return { ok: false, message: "Invalid Signin" };
+      return {
+        ok: false,
+        message: "You must be signed in to claim auction proceeds.",
+      };
     }
     const auction = await ctx.db.get(args.id);
     if (!auction) {
-      return { ok: false, message: "Auction not found" };
+      return {
+        ok: false,
+        message: "The auction you are trying to claim does not exist.",
+      };
     }
     const now = Date.now();
     if (
@@ -420,10 +436,13 @@ export const claimSellerAuction = mutation({
       auction.buyNowPrice &&
       auction.currentBid < auction.buyNowPrice
     ) {
-      return { ok: false, message: "Auction hasn't ended" };
+      return { ok: false, message: "The auction has not ended yet." };
     }
     if (auction.seller != user._id || auction.seller_claim) {
-      return { ok: false, message: "You do not own this auction." };
+      return {
+        ok: false,
+        message: "You are not authorized to claim this auction.",
+      };
     }
     if (auction.currentBid) {
       ctx.db.patch(user._id, { balance: user.balance + auction.currentBid });
@@ -442,7 +461,11 @@ export const claimSellerAuction = mutation({
       user.inventory.push(item);
       ctx.db.patch(user._id, { inventory: user.inventory });
     }
-    return { ok: true, message: "Succesfully claimed " + txt };
+    return {
+      ok: true,
+      message:
+        "You have successfully claimed the auction proceeds of " + txt + ".",
+    };
   },
 });
 
@@ -480,19 +503,25 @@ export const claimbidderAuction = mutation({
     if (!tbid) {
       return {
         ok: false,
-        message: "You do not have a bid in this auction",
+        message:
+          "You do not have a bid in this auction. Please ensure you have participated in the auction before claiming.",
       };
     }
     if (auction.bidid == tbid?._id) {
       return {
         ok: false,
-        message: "You may not claim your bid as you won the auction",
+        message:
+          "You cannot claim your bid refund because you won the auction. Please claim your item instead.",
       };
     }
 
     ctx.db.patch(user._id, { balance: user.balance + tbid?.bid });
     ctx.db.delete(tbid._id);
-    return { ok: true, message: "Succesfully claimed" };
+    return {
+      ok: true,
+      message:
+        "You have successfully claimed your bid refund. The amount has been added back to your balance.",
+    };
   },
 });
 
@@ -530,19 +559,20 @@ export const claimwinnerAuction = mutation({
     if (!tbid) {
       return {
         ok: false,
-        message: "You do not have a bid in this auction",
+        message: "You must have an active bid in this auction to claim it.",
       };
     }
     if (auction.bidid != tbid?._id) {
       return {
         ok: false,
-        message: "You may not claim this item as you haven't won the auction",
+        message:
+          "You cannot claim this item because you did not win the auction.",
       };
     }
     if (auction.buyer_claim) {
       return {
         ok: false,
-        message: "You have already claimed this item",
+        message: "This item has already been claimed.",
       };
     }
 
@@ -557,7 +587,11 @@ export const claimwinnerAuction = mutation({
     });
     user.inventory.push(item);
     ctx.db.patch(user._id, { inventory: user.inventory });
-    return { ok: true, message: "Succesfully claimed" };
+    return {
+      ok: true,
+      message:
+        "You have successfully claimed your auction item. It has been added to your inventory.",
+    };
   },
 });
 
@@ -568,14 +602,23 @@ export const buyItNow = mutation({
       user: Doc<"users"> | null;
     };
     if (!user) {
-      return { ok: false, message: "Invalid Signin" };
+      return {
+        ok: false,
+        message: "You must be signed in to complete this action.",
+      };
     }
     const auction = await ctx.db.get(args.id);
     if (!auction) {
-      return { ok: false, message: "Auction not found" };
+      return {
+        ok: false,
+        message: "The auction you are trying to buy does not exist.",
+      };
     }
     if (!auction.buyNowPrice) {
-      return { ok: false, message: "Not a BIN Auction" };
+      return {
+        ok: false,
+        message: "This auction is not eligible for 'Buy It Now'.",
+      };
     }
     const now = Date.now();
     if (
@@ -584,13 +627,22 @@ export const buyItNow = mutation({
         auction.currentBid &&
         auction.currentBid >= auction.buyNowPrice)
     ) {
-      return { ok: false, message: "Auction has already ended" };
+      return {
+        ok: false,
+        message: "The auction has already ended or been purchased.",
+      };
     }
     if (user.balance < auction.buyNowPrice) {
-      return { ok: false, message: "Insufucient funds" };
+      return {
+        ok: false,
+        message: "You do not have sufficient funds to complete this purchase.",
+      };
     }
     if (user._id == auction.seller) {
-      return { ok: false, message: "You cannot buy your own item" };
+      return {
+        ok: false,
+        message: "You cannot purchase your own auction item.",
+      };
     }
     const bid = await ctx.db.insert("bids", {
       auctionId: auction._id,
@@ -603,7 +655,11 @@ export const buyItNow = mutation({
       bidcount: auction.bidcount + 1,
     });
     ctx.db.patch(user._id, { balance: user.balance - auction.buyNowPrice });
-    return { ok: true, message: "This Auction has been Succesfully Bought" };
+    return {
+      ok: true,
+      message:
+        "You have successfully purchased the auction item. Thank you for your purchase!",
+    };
   },
 });
 export const bid = mutation({
@@ -613,14 +669,17 @@ export const bid = mutation({
       user: Doc<"users"> | null;
     };
     if (!user) {
-      return { ok: false, message: "Invalid Signin" };
+      return { ok: false, message: "You must be signed in to place a bid." };
     }
     const auction = await ctx.db.get(args.id);
     if (!auction) {
-      return { ok: false, message: "Auction not found" };
+      return {
+        ok: false,
+        message: "The auction you are trying to bid on does not exist.",
+      };
     }
     if (!auction.currentBid) {
-      return { ok: false, message: "Not a Bid Auction" };
+      return { ok: false, message: "This auction does not accept bids." };
     }
     const now = Date.now();
     if (
@@ -629,13 +688,19 @@ export const bid = mutation({
         auction.currentBid &&
         auction.currentBid >= auction.buyNowPrice)
     ) {
-      return { ok: false, message: "Auction has already ended" };
+      return { ok: false, message: "The auction has already ended." };
     }
     if (args.amt < auction.currentBid || user._id == auction.seller) {
-      return { ok: false, message: "Invalid bid" };
+      return {
+        ok: false,
+        message: "Your bid must be higher than the current bid.",
+      };
     }
-    if (user.balance < args.amt) {
-      return { ok: false, message: "Insufucient funds" };
+    if (user.balance < args.amt || user._id == auction.seller) {
+      return {
+        ok: false,
+        message: "You do not have sufficient funds to place this bid.",
+      };
     }
     let tbid = await ctx.db
       .query("bids")
@@ -664,6 +729,9 @@ export const bid = mutation({
       bidcount: auction.bidcount + 1,
     });
     ctx.db.patch(user._id, { balance: user.balance - args.amt });
-    return { ok: true, message: "You have Succesfully bid on this Auction" };
+    return {
+      ok: true,
+      message: "Your bid has been successfully placed. Good luck!",
+    };
   },
 });
