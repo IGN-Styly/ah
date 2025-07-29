@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { Doc, Id } from "./_generated/dataModel";
 import { useMutation } from "convex/react";
 import { paginationOptsValidator } from "convex/server";
+import { formatPriceBNK } from "@/lib/price";
 
 // Sort types
 export const SortOptions = {
@@ -401,6 +402,7 @@ export const cancelAuction = mutation({
 export const claimSellerAuction = mutation({
   args: { id: v.id("auctions") },
   handler: async (ctx, args) => {
+    let txt = "";
     const { user } = (await ctx.runQuery(internal.users.signUser)) as {
       user: Doc<"users"> | null;
     };
@@ -426,6 +428,7 @@ export const claimSellerAuction = mutation({
     if (auction.currentBid) {
       ctx.db.patch(user._id, { balance: user.balance + auction.currentBid });
       ctx.db.patch(auction._id, { seller_claim: true });
+      txt = formatPriceBNK(auction.currentBid);
     } else {
       ctx.db.delete(auction._id);
       const item = await ctx.db.insert("items", {
@@ -435,10 +438,11 @@ export const claimSellerAuction = mutation({
         title: auction.title,
         user: user._id,
       });
+      txt = "item";
       user.inventory.push(item);
       ctx.db.patch(user._id, { inventory: user.inventory });
     }
-    return { ok: true, message: "Succesfully claimed" };
+    return { ok: true, message: "Succesfully claimed " + txt };
   },
 });
 
