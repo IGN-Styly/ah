@@ -1,3 +1,4 @@
+import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { getToken } from "@convex-dev/better-auth/nextjs";
@@ -13,6 +14,7 @@ const layout = async ({ children }: { children: React.ReactNode }) => {
       <>
         <Toaster />
         {children}
+        <Footer />
       </>
     );
   } else {

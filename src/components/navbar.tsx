@@ -61,11 +61,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden lg:flex items-center space-x-8 text-[14px]  text-center flex-1  justify-center-safe">
-            <Link href="#">About</Link>
-            <Link href="#">Pricing</Link>
-            <Link href="#">Changelog</Link>
-          </div>
+          <div className="hidden lg:flex items-center space-x-8 text-[14px]  text-center flex-1  justify-center-safe"></div>
 
           <div className="flex items-center space-x-4">
             {!user ? (

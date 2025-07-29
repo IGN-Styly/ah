@@ -27,9 +27,7 @@ import Footer from "@/components/footer";
 
 export default function Home() {
   let user = useQuery(api.auth.getCurrentUser);
-  if (user) {
-    redirect("/dashboard");
-  }
+
   return (
     <div className="">
       <Navbar></Navbar>
@@ -46,7 +44,7 @@ export default function Home() {
               </p>
               <div className="space-x-4">
                 <Link
-                  href="/signin"
+                  href={user ? "/dashboard" : "/signin"}
                   className={cn(buttonVariants({ size: "lg" }), "rounded-none")}
                 >
                   Get Started
