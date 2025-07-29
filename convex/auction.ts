@@ -219,7 +219,6 @@ export const get = query({
     now: v.number(),
   },
   handler: async (ctx, args) => {
-    console.log(args.paginationOpts);
     let q;
 
     // Not own: use existing query logic
