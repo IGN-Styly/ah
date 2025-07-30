@@ -24,8 +24,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Footer from "@/components/footer";
+import { env } from "@/lib/env";
 
 export default function Home() {
+  env;
   let user = useQuery(api.auth.getCurrentUser);
 
   return (
