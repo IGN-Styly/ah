@@ -1,3 +1,4 @@
+"use client";
 import { AuctionCard } from "./auction-card";
 import { example, jsonexample, parseNBT } from "./nbt";
 import { api } from "@convex/_generated/api";
@@ -14,7 +15,7 @@ import {
   PaginationContent,
   PaginationPrevious,
 } from "./ui/pagination";
-import { useNextPrevPaginatedQuery } from "convex-use-next-prev-paginated-query";
+import { useNextPrevPaginatedQuery } from "@/hooks/usePaginate";
 // Props for the AuctionGrid component
 export interface AuctionGridProps {
   filter?: AuctionFilter;
@@ -38,6 +39,7 @@ interface AuctionFilter {
   seller?: Id<"users">;
 }
 export default function AuctionGrid({ ...props }: AuctionGridProps) {
+  const [date, setDate] = useState(Date.now());
   const auctions = useNextPrevPaginatedQuery(
     api.auction.get,
     {
@@ -47,12 +49,12 @@ export default function AuctionGrid({ ...props }: AuctionGridProps) {
       includeEnded: props.filter?.ended,
       search: props.filter?.search,
       own: props.filter?.seller,
+      now: date,
     },
-    { initialNumItems: 10 },
+    { initialNumItems: 18 },
   );
 
-  const loading = Array.from({ length: 24 }, (_, i) => i + 1);
-  console.log(auctions);
+  const loading = Array.from({ length: 18 }, (_, i) => i + 1);
 
   return (
     <main className="p-4">

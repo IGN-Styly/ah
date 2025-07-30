@@ -168,7 +168,7 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
 
                   <div className="flex gap-2 mt-4">
                     <Button
-                      className="w-full rounded-none text-sm font-mono font-black"
+                      className="flex-1 rounded-none text-sm font-mono font-black"
                       onClick={() => {
                         setStartTime(new Date());
                         setModalState({
@@ -179,6 +179,12 @@ const InventoryCard = ({ item }: { item: Doc<"items"> }) => {
                       }}
                     >
                       SELL ITEM
+                    </Button>
+                    <Button
+                      className="flex-1 rounded-none text-sm font-mono font-black"
+                      disabled
+                    >
+                      SEND TO ITEM STASH
                     </Button>
                   </div>
                 </div>

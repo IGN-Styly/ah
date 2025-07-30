@@ -6,27 +6,26 @@ import { get } from "./auction";
 import { api, internal } from "./_generated/api";
 import { ar, tr } from "date-fns/locale";
 import AppConfig from "@/lib/config";
+import { paginationOptsValidator } from "convex/server";
+
 export const getItems = query({
   args: {
     category: v.optional(v.string()),
     search: v.optional(v.string()), // Add search argument
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    let items = [];
     const { user } = (await ctx.runQuery(internal.users.signUser)) as {
       user: Doc<"users"> | null;
     };
     if (!user?.inventory) {
       return null;
     }
-    for (var id of user.inventory) {
-      const item = await ctx.db.get(id as Id<"items">);
-      if (
-        args.category &&
-        (item?.category == args.category || args.category == "all")
-      )
-        items.push(item);
-    }
+    let items = await ctx.db
+      .query("items")
+      .filter((f) => f.eq(user._id, f.field("user")))
+      .paginate(args.paginationOpts);
+
     return items;
   },
 });
