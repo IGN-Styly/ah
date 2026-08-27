@@ -1,7 +1,6 @@
 # Auction House
 
-Auction House is a modern, real-time web application for buying and selling Minecraft NBT items in an open market for coins. Built with the BENTO stack, it leverages the latest in web technologies to deliver a fast, reactive experience.
-
+Auction House is real-time web application for buying and selling Minecraft NBT items in an open market for coins.
 ---
 
 ## Features
@@ -57,10 +56,5 @@ convex/          # Convex backend functions and schema
 
 ---
 
-## Contributing
-
-Contributions are welcome! Please open issues or submit pull requests for improvements or bug fixes.
-
----
 
 *This project is an experiment in rapid MVP development using the BENTO stack. For more details, see the source code.*
